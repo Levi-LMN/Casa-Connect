@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34616.47
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Casa-Connect", "Casa-Connect.csproj", "{EDC32E52-098C-49E6-ADDC-E1CAE971A431}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EDC32E52-098C-49E6-ADDC-E1CAE971A431}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDC32E52-098C-49E6-ADDC-E1CAE971A431}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDC32E52-098C-49E6-ADDC-E1CAE971A431}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDC32E52-098C-49E6-ADDC-E1CAE971A431}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8108B076-6E09-4074-AFE2-6096F0A3AD1C}
+	EndGlobalSection
+EndGlobal
