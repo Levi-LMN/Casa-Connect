@@ -1,3 +1,6 @@
+using CasaConnect.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace CasaConnect
 {
     public class Program
@@ -9,13 +12,16 @@ namespace CasaConnect
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
+            // Configure database context (Make sure your connection string is in appsettings.json)
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
