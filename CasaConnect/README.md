@@ -50,6 +50,10 @@ Ensure you have the following installed:
    ```sh
    dotnet run
    ```
+   For automatic reloading
+   ```sh
+   dotnet watch run
+   ```
 5. Open your browser and go to `http://localhost:5000`
 
 ## 🤝 Contributing
