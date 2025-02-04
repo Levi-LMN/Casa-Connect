@@ -21,7 +21,7 @@ CasaConnect is an MVC web application built with .NET C# to assist people in fin
 - **Authentication:** Identity Framework
 - **Version Control:** Git & GitHub
 
-## 📦 Installation & Setup
+## 🛆 Installation & Setup
 
 ### Prerequisites
 
@@ -42,8 +42,9 @@ Ensure you have the following installed:
    ```sh
    dotnet restore
    ```
-3. Apply database migrations:
+3. Create and apply database migrations:
    ```sh
+   dotnet ef migrations add InitialCreate
    dotnet ef database update
    ```
 4. Run the application:
@@ -62,7 +63,7 @@ Contributions are welcome! Follow these steps:
 4. Push to your branch: `git push origin feature-branch`
 5. Create a pull request.
 
-## 📄 License
+## 📝 License
 
 This project is licensed under the MIT License.
 
