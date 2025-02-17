@@ -33,6 +33,12 @@
                                     <a class="nav-link text-dark" asp-controller="User" asp-action="CreateAdmin">Create Admin</a>
                                 </li>
                             }
+                            @if (User.IsInRole("Owner"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Properties" asp-action="Dashboard">My Properties</a>
+                                </li>
+                            }
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                             </li>

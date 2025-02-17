@@ -10,6 +10,10 @@ namespace CasaConnect.Data
         {
         }
 
+
         public DbSet<User> Users { get; set; }
+
+        public DbSet<Property> Properties { get; set; }
+        public DbSet<PropertyImage> PropertyImages { get; set; }
     }
 }

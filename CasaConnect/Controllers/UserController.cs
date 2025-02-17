@@ -73,7 +73,7 @@ namespace CasaConnect.Controllers
                     existingUser.Email = user.Email;
                     existingUser.PhoneNo = user.PhoneNo;
                     existingUser.Address = user.Address;
-                    existingUser.Role = user.Role;
+                    existingUser.Role = user.Role; // Admin, Seeker, or Owner
 
                     // Don't update sensitive fields like Password or CreatedAt
 
