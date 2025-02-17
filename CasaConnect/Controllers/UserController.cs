@@ -1,6 +1,9 @@
 ﻿using CasaConnect.Data;
 using CasaConnect.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+
 
 namespace CasaConnect.Controllers
 {
@@ -121,6 +124,52 @@ namespace CasaConnect.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
+        [Authorize(Roles = "Admin")]
+        public IActionResult CreateAdmin()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAdmin(RegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                if (_context.Users.Any(u => u.Email == model.Email))
+                {
+                    ModelState.AddModelError("Email", "Email already exists");
+                    return View(model);
+                }
+
+                var user = new User
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    PhoneNo = model.PhoneNo,
+                    Address = model.Address,
+                    Role = "Admin",  // Force role to be Admin
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                // Use PasswordHasher to hash the password
+                var passwordHasher = new PasswordHasher<User>();
+                user.Password = passwordHasher.HashPassword(user, model.Password);
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Admin user created successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(model);
+        }
+
 
         private bool UserExists(int id)
         {

@@ -2,19 +2,20 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity; // Add this namespace
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 
 public class AccountController : Controller
 {
     private readonly CasaConnect.Data.ApplicationDbContext _context;
+    private readonly IPasswordHasher<User> _passwordHasher; // Add password hasher
 
-    public AccountController(CasaConnect.Data.ApplicationDbContext context)
+    public AccountController(CasaConnect.Data.ApplicationDbContext context, IPasswordHasher<User> passwordHasher)
     {
         _context = context;
+        _passwordHasher = passwordHasher; // Inject the password hasher
     }
 
     public IActionResult Login()
@@ -28,37 +29,47 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            var hashedPassword = HashPassword(model.Password);
             var user = _context.Users.FirstOrDefault(u =>
-                u.Email == model.Email &&
-                u.Password == hashedPassword);
+                u.Email == model.Email);
 
             if (user != null)
             {
-                var claims = new List<Claim>
+                // Use PasswordHasher to verify the password
+                var result = _passwordHasher.VerifyHashedPassword(user, user.Password, model.Password);
+
+                if (result == PasswordVerificationResult.Success)
                 {
-                    new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role),
-                    new Claim("UserId", user.Id.ToString())
-                };
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, user.Email),
+                        new Claim(ClaimTypes.Role, user.Role),
+                        new Claim("UserId", user.Id.ToString())
+                    };
 
-                var claimsIdentity = new ClaimsIdentity(
-                    claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var claimsIdentity = new ClaimsIdentity(
+                        claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-                var authProperties = new AuthenticationProperties
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = model.RememberMe
+                    };
+
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(claimsIdentity),
+                        authProperties);
+
+                    return RedirectToAction("Index", "Home");
+                }
+                else
                 {
-                    IsPersistent = model.RememberMe
-                };
-
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties);
-
-                return RedirectToAction("Index", "Home");
+                    ModelState.AddModelError("", "Invalid login attempt.");
+                }
             }
-
-            ModelState.AddModelError("", "Invalid login attempt.");
+            else
+            {
+                ModelState.AddModelError("", "Invalid login attempt.");
+            }
         }
 
         return View(model);
@@ -86,10 +97,11 @@ public class AccountController : Controller
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
-                Password = HashPassword(model.Password),
+                // Use PasswordHasher to hash the password
+                Password = _passwordHasher.HashPassword(new User(), model.Password),
                 PhoneNo = model.PhoneNo,
-                Address = model.Address,  // Add this line
-                Role = model.Role,
+                Address = model.Address,
+                Role = model.Role, // Admin, Seeker, or Owner
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -128,15 +140,6 @@ public class AccountController : Controller
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(claimsIdentity));
-    }
-
-    private string HashPassword(string password)
-    {
-        using (var sha256 = SHA256.Create())
-        {
-            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(hashedBytes);
-        }
     }
 
     [Authorize]
@@ -195,7 +198,7 @@ public class AccountController : Controller
         // Optional: Handle password change
         if (!string.IsNullOrEmpty(model.NewPassword))
         {
-            user.Password = HashPassword(model.NewPassword);
+            user.Password = _passwordHasher.HashPassword(user, model.NewPassword); // Hash the new password
         }
 
         try
