@@ -136,40 +136,61 @@ namespace CasaConnect.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAdmin(RegisterViewModel model)
         {
-            if (ModelState.IsValid)
+            // Add this debug line
+            if (!ModelState.IsValid)
             {
-                if (_context.Users.Any(u => u.Email == model.Email))
+                foreach (var modelState in ModelState.Values)
                 {
-                    ModelState.AddModelError("Email", "Email already exists");
-                    return View(model);
+                    foreach (var error in modelState.Errors)
+                    {
+                        Console.WriteLine($"Validation Error: {error.ErrorMessage}");
+                    }
                 }
-
-                var user = new User
-                {
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    Email = model.Email,
-                    PhoneNo = model.PhoneNo,
-                    Address = model.Address,
-                    Role = "Admin",  // Force role to be Admin
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                // Use PasswordHasher to hash the password
-                var passwordHasher = new PasswordHasher<User>();
-                user.Password = passwordHasher.HashPassword(user, model.Password);
-
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Admin user created successfully!";
-                return RedirectToAction(nameof(Index));
             }
 
+            if (ModelState.IsValid)
+            {
+                try  // Add try-catch block for better error handling
+                {
+                    if (_context.Users.Any(u => u.Email == model.Email))
+                    {
+                        ModelState.AddModelError("Email", "Email already exists");
+                        return View(model);
+                    }
+
+                    var user = new User
+                    {
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        Email = model.Email,
+                        PhoneNo = model.PhoneNo,
+                        Address = model.Address,
+                        Role = "Admin",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    var passwordHasher = new PasswordHasher<User>();
+                    user.Password = passwordHasher.HashPassword(user, model.Password);
+
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Admin user created successfully!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    // Add error logging
+                    Console.WriteLine($"Error creating admin: {ex.Message}");
+                    ModelState.AddModelError("", "An error occurred while creating the admin user.");
+                }
+            }
+
+            // Add this debug line
+            Console.WriteLine("Returning to view due to invalid ModelState");
             return View(model);
         }
-
 
         private bool UserExists(int id)
         {
