@@ -281,5 +281,26 @@ namespace CasaConnect.Controllers
         {
             return _context.Properties.Any(e => e.Id == id);
         }
+
+        // GET: Properties/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var property = await _context.Properties
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == id && p.OwnerId == userId);
+
+            if (property == null)
+            {
+                return NotFound();
+            }
+
+            return View(property);
+        }
     }
 }
