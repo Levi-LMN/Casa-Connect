@@ -7,7 +7,7 @@
     <h2>Edit Property</h2>
     <form asp-action="Edit" enctype="multipart/form-data">
         <input type="hidden" asp-for="Id" />
-
+        
         <div class="mb-3">
             <label asp-for="Title" class="form-label"></label>
             <input asp-for="Title" class="form-control" required />
@@ -95,17 +95,26 @@
 
         <div class="mb-3">
             <label class="form-label">Current Images:</label>
-            <div class="d-flex flex-wrap">
+            <div class="d-flex flex-wrap" id="imageContainer">
                 @if (Model.Images != null)
                 {
                     @foreach (var image in Model.Images)
                     {
-                        <div class="me-2 mb-2">
+                        <div class="me-2 mb-2 position-relative image-item" data-image-id="@image.Id">
                             <img src="@image.ImagePath" class="img-thumbnail" width="100" height="100" alt="Property Image" />
+                            <div class="image-overlay">
+                                <input type="checkbox" name="deleteImages" value="@image.Id" class="delete-checkbox" />
+                            </div>
                         </div>
                     }
                 }
             </div>
+            @if (Model.Images != null && Model.Images.Any())
+            {
+                <div class="mt-2">
+                    <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBtn">Delete Selected Images</button>
+                </div>
+            }
         </div>
 
         <div class="mb-3">
@@ -121,8 +130,56 @@
     </form>
 </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+<style>
+    .image-item {
+        position: relative;
+        display: inline-block;
     }
+
+    .image-overlay {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 2px;
+        border-radius: 3px;
+    }
+
+    .delete-checkbox {
+        cursor: pointer;
+    }
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Handle individual image selection
+            $('.delete-checkbox').change(function() {
+                updateDeleteButtonVisibility();
+            });
+
+            // Update delete button visibility based on selections
+            function updateDeleteButtonVisibility() {
+                var hasSelectedImages = $('.delete-checkbox:checked').length > 0;
+                $('#deleteSelectedBtn').toggle(hasSelectedImages);
+            }
+
+            // Initialize delete button visibility
+            updateDeleteButtonVisibility();
+
+            // Handle confirmation before form submission
+            $('form').submit(function(e) {
+                var selectedImages = $('.delete-checkbox:checked').length;
+                if (selectedImages > 0) {
+                    if (!confirm(`Are you sure you want to delete ${selectedImages} selected image(s)? This action cannot be undone.`)) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                return true;
+            });
+        });
+    </script>
 }

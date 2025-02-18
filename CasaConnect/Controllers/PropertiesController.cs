@@ -43,13 +43,11 @@ namespace CasaConnect.Controllers
         {
             try
             {
-                // Remove any model state errors for Owner and Images
                 ModelState.Remove("Owner");
                 ModelState.Remove("Images");
 
                 if (ModelState.IsValid)
                 {
-                    // Set the OwnerId from the current user
                     property.OwnerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                     property.CreatedAt = DateTime.UtcNow;
                     property.IsAvailable = true;
@@ -58,7 +56,6 @@ namespace CasaConnect.Controllers
                     _context.Properties.Add(property);
                     await _context.SaveChangesAsync();
 
-                    // Handle image uploads
                     if (images != null && images.Any())
                     {
                         var uploadPath = Path.Combine(_webHostEnvironment.WebRootPath, "property-images");
@@ -138,7 +135,7 @@ namespace CasaConnect.Controllers
         // POST: Properties/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,Price,Address,City,State,ZipCode,Bedrooms,Bathrooms,SquareFootage,PropertyType,IsAvailable")] Property property, List<IFormFile>? newImages)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,Price,Address,City,State,ZipCode,Bedrooms,Bathrooms,SquareFootage,PropertyType,IsAvailable")] Property property, List<IFormFile>? newImages, List<int>? deleteImages)
         {
             if (id != property.Id)
             {
@@ -159,6 +156,26 @@ namespace CasaConnect.Controllers
             {
                 try
                 {
+                    // Handle image deletions
+                    if (deleteImages != null && deleteImages.Any())
+                    {
+                        foreach (var imageId in deleteImages)
+                        {
+                            var image = await _context.PropertyImages.FindAsync(imageId);
+                            if (image != null && image.PropertyId == property.Id)
+                            {
+                                // Delete physical file
+                                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, image.ImagePath.TrimStart('/'));
+                                if (System.IO.File.Exists(filePath))
+                                {
+                                    System.IO.File.Delete(filePath);
+                                }
+
+                                _context.PropertyImages.Remove(image);
+                            }
+                        }
+                    }
+
                     // Preserve original owner and timestamps
                     property.OwnerId = existingProperty.OwnerId;
                     property.CreatedAt = existingProperty.CreatedAt;
@@ -168,7 +185,7 @@ namespace CasaConnect.Controllers
                     // Update the existing property values
                     _context.Entry(existingProperty).CurrentValues.SetValues(property);
 
-                    // Handle image uploads
+                    // Handle new image uploads
                     if (newImages != null && newImages.Any())
                     {
                         var uploadPath = Path.Combine(_webHostEnvironment.WebRootPath, "property-images");
@@ -214,11 +231,50 @@ namespace CasaConnect.Controllers
                         throw;
                     }
                 }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = "An error occurred while updating the property: " + ex.Message;
+                }
             }
 
             // If we get here, something failed. Reload the images before returning to the view
             property.Images = existingProperty.Images;
             return View(property);
+        }
+
+        // POST: Properties/DeleteImage/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteImage(int id)
+        {
+            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var image = await _context.PropertyImages
+                .Include(pi => pi.Property)
+                .FirstOrDefaultAsync(pi => pi.Id == id && pi.Property.OwnerId == userId);
+
+            if (image == null)
+            {
+                return Json(new { success = false, message = "Image not found" });
+            }
+
+            try
+            {
+                // Delete physical file
+                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, image.ImagePath.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+
+                _context.PropertyImages.Remove(image);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         private bool PropertyExists(int id)
