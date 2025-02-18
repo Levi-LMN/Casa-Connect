@@ -15,9 +15,9 @@ namespace CasaConnect
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            // Configure database context (Make sure your connection string is in appsettings.json)
+            // Configure database context to use SQLite
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Add Identity services and PasswordHasher
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -54,7 +54,6 @@ namespace CasaConnect
             app.UseRouting();
 
             app.UseAuthentication();
-
             app.UseAuthorization();
 
             app.MapControllerRoute(
