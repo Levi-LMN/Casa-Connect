@@ -36,7 +36,6 @@ namespace CasaConnect.Controllers
             return View();
         }
 
-
         // POST: Properties/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -128,13 +127,18 @@ namespace CasaConnect.Controllers
                 return NotFound();
             }
 
+            if (property.Images == null)
+            {
+                property.Images = new List<PropertyImage>();
+            }
+
             return View(property);
         }
 
         // POST: Properties/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Property property, List<IFormFile> newImages)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,Price,Address,City,State,ZipCode,Bedrooms,Bathrooms,SquareFootage,PropertyType,IsAvailable")] Property property, List<IFormFile>? newImages)
         {
             if (id != property.Id)
             {
@@ -142,26 +146,60 @@ namespace CasaConnect.Controllers
             }
 
             var userId = int.Parse(User.FindFirst("UserId").Value);
-            if (property.OwnerId != userId)
+            var existingProperty = await _context.Properties
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == id && p.OwnerId == userId);
+
+            if (existingProperty == null)
             {
-                return Forbid();
+                return NotFound();
             }
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Preserve original owner and timestamps
+                    property.OwnerId = existingProperty.OwnerId;
+                    property.CreatedAt = existingProperty.CreatedAt;
                     property.UpdatedAt = DateTime.UtcNow;
-                    _context.Update(property);
-                    await _context.SaveChangesAsync();
+                    property.Images = existingProperty.Images;
 
-                    // Handle new image uploads
-                    if (newImages != null && newImages.Count > 0)
+                    // Update the existing property values
+                    _context.Entry(existingProperty).CurrentValues.SetValues(property);
+
+                    // Handle image uploads
+                    if (newImages != null && newImages.Any())
                     {
-                        // Similar image upload logic as in Create action
-                        // ... (implement the same image upload logic here)
+                        var uploadPath = Path.Combine(_webHostEnvironment.WebRootPath, "property-images");
+                        Directory.CreateDirectory(uploadPath);
+
+                        foreach (var image in newImages)
+                        {
+                            if (image.Length > 0)
+                            {
+                                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+                                var filePath = Path.Combine(uploadPath, fileName);
+
+                                using (var stream = new FileStream(filePath, FileMode.Create))
+                                {
+                                    await image.CopyToAsync(stream);
+                                }
+
+                                var propertyImage = new PropertyImage
+                                {
+                                    PropertyId = property.Id,
+                                    ImagePath = "/property-images/" + fileName,
+                                    IsPrimary = !existingProperty.Images.Any(),
+                                    UploadedAt = DateTime.UtcNow
+                                };
+
+                                _context.PropertyImages.Add(propertyImage);
+                            }
+                        }
                     }
 
+                    await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Property updated successfully!";
                     return RedirectToAction(nameof(Dashboard));
                 }
@@ -177,6 +215,9 @@ namespace CasaConnect.Controllers
                     }
                 }
             }
+
+            // If we get here, something failed. Reload the images before returning to the view
+            property.Images = existingProperty.Images;
             return View(property);
         }
 
