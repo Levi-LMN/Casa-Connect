@@ -1,8 +1,107 @@
-﻿@{
+﻿@model IEnumerable<CasaConnect.Models.Property>
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container">
+    <div class="text-center mb-4">
+        <h1 class="display-4">Welcome to CasaConnect</h1>
+        <p class="lead">Find your perfect home today</p>
+    </div>
+
+    <div class="row">
+        @foreach (var property in Model)
+        {
+            var carouselId = $"propertyCarousel{property.Id}";
+
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    @if (property.Images != null && property.Images.Any())
+                    {
+                        <div id="@carouselId" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                @foreach (var image in property.Images.Select((value, index) => new { value, index }))
+                                {
+                                    <div class="carousel-item @(image.index == 0 ? "active" : "")">
+                                        <img src="@image.value.ImagePath" class="card-img-top" alt="@property.Title"
+                                             style="height: 200px; object-fit: cover;">
+                                    </div>
+                                }
+                            </div>
+                            @if (property.Images.Count > 1)
+                            {
+                                <button class="carousel-control-prev" type="button" data-bs-target="#@carouselId" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#@carouselId" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            }
+                            <div class="carousel-indicators" style="margin-bottom: 0;">
+                                @for (var i = 0; i < property.Images.Count; i++)
+                                {
+                                    <button type="button"
+                                            data-bs-target="#@carouselId"
+                                            data-bs-slide-to="@i"
+                                            class="@(i == 0 ? "active" : "")"
+                                            aria-current="@(i == 0 ? "true" : "false")"
+                                            aria-label="Slide @(i + 1)">
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <span class="text-muted">No Image Available</span>
+                        </div>
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@property.Title</h5>
+                        <p class="card-text text-muted">
+                            <i class="bi bi-geo-alt"></i> @property.City, @property.State
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="h5 text-primary mb-0">@property.Price.ToString("C0")</span>
+                            <span class="badge bg-success">@property.PropertyType</span>
+                        </div>
+                        <div class="row g-0 text-center mb-3">
+                            <div class="col">
+                                <small class="text-muted d-block">Beds</small>
+                                <span>@property.Bedrooms</span>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted d-block">Baths</small>
+                                <span>@property.Bathrooms</span>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted d-block">Sq.Ft</small>
+                                <span>@property.SquareFootage</span>
+                            </div>
+                        </div>
+                        <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-primary w-100">View Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Initialize all carousels with custom options
+        document.addEventListener('DOMContentLoaded', function () {
+            var carousels = document.querySelectorAll('.carousel');
+            carousels.forEach(function (carousel) {
+                new bootstrap.Carousel(carousel, {
+                    interval: 3000,  // Time between automatic sliding (milliseconds)
+                    wrap: true       // Whether the carousel should cycle continuously
+                });
+            });
+        });
+    </script>
+}
