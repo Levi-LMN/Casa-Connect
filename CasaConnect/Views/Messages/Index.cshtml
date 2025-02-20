@@ -1,12 +1,20 @@
-﻿@model List<CasaConnect.Models.Conversation>
-
+﻿<!-- Index.cshtml -->
+@model List<CasaConnect.Models.Conversation>
 @{
     ViewData["Title"] = "My Messages";
     var currentUserId = int.Parse(User.FindFirst("UserId").Value);
 }
 
 <div class="container mt-4">
-    <h2 class="mb-4">My Messages</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Messages</h2>
+        @if (Model.Any())
+        {
+            <button id="deleteAllConversations" class="btn btn-danger">
+                Delete All Conversations
+            </button>
+        }
+    </div>
 
     @if (!Model.Any())
     {
@@ -23,26 +31,106 @@
                 ? conversation.Owner
                 : conversation.Seeker;
                 var lastMessage = conversation.Messages.OrderByDescending(m => m.SentAt).FirstOrDefault();
+                var unreadCount = conversation.Messages.Count(m => m.ReceiverId == currentUserId && !m.ReadAt.HasValue);
 
-                <a href="@Url.Action("Conversation", new { id = conversation.Id })"
-                   class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">@conversation.Property.Title</h5>
-                        <small>
-                            @(lastMessage?.SentAt.ToString("MMM dd, yyyy") ?? conversation.CreatedAt.ToString("MMM dd, yyyy"))
-                        </small>
+                <div class="list-group-item list-group-item-action position-relative">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <a href="@Url.Action("Conversation", new { id = conversation.Id })"
+                           class="flex-grow-1 text-decoration-none text-dark">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">@conversation.Property.Title</h5>
+                                <small>
+                                    @(lastMessage?.SentAt.ToString("MMM dd, yyyy") ?? conversation.CreatedAt.ToString("MMM dd, yyyy"))
+                                </small>
+                            </div>
+                            <p class="mb-1">@otherUser.FirstName @otherUser.LastName</p>
+                            @if (lastMessage != null)
+                            {
+                                <small class="text-muted">
+                                    @(lastMessage.Content.Length > 50
+                                        ? lastMessage.Content.Substring(0, 47) + "..."
+                                        : lastMessage.Content)
+                                </small>
+                            }
+                            @if (unreadCount > 0)
+                            {
+                                <span class="badge bg-primary rounded-pill position-absolute top-0 end-0 mt-2 me-5">
+                                    @unreadCount
+                                </span>
+                            }
+                        </a>
+                        <div class="dropdown ms-3">
+                            <button class="btn btn-link text-dark p-0" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item text-danger delete-conversation"
+                                       href="#"
+                                       data-conversation-id="@conversation.Id">
+                                        Delete Conversation
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                    <p class="mb-1">@otherUser.FirstName @otherUser.LastName</p>
-                    @if (lastMessage != null)
-                    {
-                        <small class="text-muted">
-                            @(lastMessage.Content.Length > 50
-                                ? lastMessage.Content.Substring(0, 47) + "..."
-                                : lastMessage.Content)
-                        </small>
-                    }
-                </a>
+                </div>
             }
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', async function (e) {
+            if (e.target.classList.contains('delete-conversation')) {
+                e.preventDefault();
+                if (!confirm('Are you sure you want to delete this conversation? This cannot be undone.')) return;
+
+                const conversationId = e.target.dataset.conversationId;
+                try {
+                    const response = await fetch('/Messages/DeleteConversation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({ conversationId })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.reload();
+                    } else {
+                        alert(result.error || 'Failed to delete conversation');
+                    }
+                } catch (error) {
+                    alert('Failed to delete conversation');
+                }
+            }
+        });
+
+        document.getElementById('deleteAllConversations')?.addEventListener('click', async function () {
+            if (!confirm('Are you sure you want to delete all conversations? This cannot be undone.')) return;
+
+            try {
+                const response = await fetch('/Messages/DeleteAllConversations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert(result.error || 'Failed to delete conversations');
+                }
+            } catch (error) {
+                alert('Failed to delete conversations');
+            }
+        });
+    </script>
+}

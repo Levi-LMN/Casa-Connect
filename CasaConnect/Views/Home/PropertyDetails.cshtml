@@ -1,7 +1,10 @@
 ﻿@model CasaConnect.Models.Property
+@using System.Security.Claims
 
 @{
     ViewData["Title"] = Model.Title;
+    var currentUserId = User.FindFirst("UserId")?.Value;
+    var isCurrentUserOwner = currentUserId != null && currentUserId == Model.Owner.Id.ToString();
 }
 
 <div class="container">
@@ -108,15 +111,28 @@
 
                     @if (User.Identity.IsAuthenticated)
                     {
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <h3 class="h5 mb-3">Contact Owner</h3>
-                                <form asp-controller="Messages" asp-action="StartConversation" method="post">
-                                    <input type="hidden" name="propertyId" value="@Model.Id" />
-                                    <button type="submit" class="btn btn-primary w-100">Start Conversation</button>
-                                </form>
+                        @if (!isCurrentUserOwner)
+                        {
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h3 class="h5 mb-3">Contact Owner</h3>
+                                    <form asp-controller="Messages" asp-action="StartConversation" method="post">
+                                        <input type="hidden" name="propertyId" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-primary w-100">Start Conversation</button>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
+                        }
+                        else
+                        {
+                            <div class="card mb-4">
+                                <div class="card-body text-center">
+                                    <h5 class="text-primary">You Own This Property</h5>
+                                    <p class="text-muted">This is your property listing. You can edit or manage it from your dashboard.</p>
+                                    <a asp-controller="Properties" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary w-100">Edit Listing</a>
+                                </div>
+                            </div>
+                        }
                     }
                     else
                     {

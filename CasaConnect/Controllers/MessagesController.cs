@@ -125,7 +125,6 @@ namespace CasaConnect.Controllers
 
                 var userId = int.Parse(User.FindFirst("UserId").Value);
                 var conversation = await _context.Conversations
-                    .Include(c => c.Messages)
                     .FirstOrDefaultAsync(c => c.Id == request.ConversationId &&
                                             (c.SeekerId == userId || c.OwnerId == userId));
 
@@ -161,7 +160,6 @@ namespace CasaConnect.Controllers
                     conversationId = message.ConversationId
                 };
 
-                // Send to the receiver's group
                 await _hubContext.Clients.Group(receiverId.ToString())
                     .SendAsync("ReceiveMessage", messageData);
 
@@ -170,50 +168,177 @@ namespace CasaConnect.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending message for conversation {ConversationId}", request.ConversationId);
-
-                return StatusCode(500, new
-                {
-                    success = false,
-                    error = "An error occurred while sending the message",
-                    details = ex.Message // Only include in development
-                });
+                return StatusCode(500, new { success = false, error = "An error occurred while sending the message" });
             }
         }
 
-        // You might want to add these additional methods for enhanced functionality:
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MarkAsRead(int messageId)
+        public async Task<IActionResult> DeleteMessage([FromBody] DeleteMessageRequest request)
         {
             try
             {
                 var userId = int.Parse(User.FindFirst("UserId").Value);
                 var message = await _context.Messages
-                    .FirstOrDefaultAsync(m => m.Id == messageId && m.ReceiverId == userId);
+                    .Include(m => m.Conversation)
+                    .FirstOrDefaultAsync(m => m.Id == request.MessageId && m.SenderId == userId);
 
                 if (message == null)
                 {
-                    return NotFound(new { success = false, error = "Message not found" });
+                    return NotFound(new { success = false, error = "Message not found or you don't have permission to delete it" });
                 }
 
-                if (!message.ReadAt.HasValue)
+                _context.Messages.Remove(message);
+
+                // Update conversation's LastMessageAt if this was the last message
+                var lastMessage = await _context.Messages
+                    .Where(m => m.ConversationId == message.ConversationId && m.Id != message.Id)
+                    .OrderByDescending(m => m.SentAt)
+                    .FirstOrDefaultAsync();
+
+                if (lastMessage != null)
                 {
-                    message.ReadAt = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
-
-                    // Notify the sender that their message was read
-                    await _hubContext.Clients.Group(message.SenderId.ToString())
-                        .SendAsync("MessageRead", new { messageId, conversationId = message.ConversationId });
+                    message.Conversation.LastMessageAt = lastMessage.SentAt;
                 }
+                else
+                {
+                    message.Conversation.LastMessageAt = message.Conversation.CreatedAt;
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Notify other user about message deletion
+                var otherUserId = message.SenderId == userId ? message.ReceiverId : message.SenderId;
+                await _hubContext.Clients.Group(otherUserId.ToString())
+                    .SendAsync("MessageDeleted", new { messageId = message.Id, conversationId = message.ConversationId });
 
                 return Ok(new { success = true });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error marking message {MessageId} as read", messageId);
-                return StatusCode(500, new { success = false, error = "An error occurred while marking the message as read" });
+                _logger.LogError(ex, "Error deleting message {MessageId}", request.MessageId);
+                return StatusCode(500, new { success = false, error = "An error occurred while deleting the message" });
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAllMessages([FromBody] DeleteConversationRequest request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var conversation = await _context.Conversations
+                    .Include(c => c.Messages)
+                    .FirstOrDefaultAsync(c => c.Id == request.ConversationId &&
+                        (c.SeekerId == userId || c.OwnerId == userId));
+
+                if (conversation == null)
+                {
+                    return NotFound(new { success = false, error = "Conversation not found" });
+                }
+
+                _context.Messages.RemoveRange(conversation.Messages);
+                conversation.LastMessageAt = conversation.CreatedAt;
+                await _context.SaveChangesAsync();
+
+                // Notify other user about all messages being deleted
+                var otherUserId = conversation.SeekerId == userId ? conversation.OwnerId : conversation.SeekerId;
+                await _hubContext.Clients.Group(otherUserId.ToString())
+                    .SendAsync("AllMessagesDeleted", conversation.Id);
+
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting all messages for conversation {ConversationId}", request.ConversationId);
+                return StatusCode(500, new { success = false, error = "An error occurred while deleting the messages" });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConversation([FromBody] DeleteConversationRequest request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var conversation = await _context.Conversations
+                    .Include(c => c.Messages)
+                    .FirstOrDefaultAsync(c => c.Id == request.ConversationId &&
+                        (c.SeekerId == userId || c.OwnerId == userId));
+
+                if (conversation == null)
+                {
+                    return NotFound(new { success = false, error = "Conversation not found" });
+                }
+
+                _context.Messages.RemoveRange(conversation.Messages);
+                _context.Conversations.Remove(conversation);
+                await _context.SaveChangesAsync();
+
+                // Notify other user about conversation deletion
+                var otherUserId = conversation.SeekerId == userId ? conversation.OwnerId : conversation.SeekerId;
+                await _hubContext.Clients.Group(otherUserId.ToString())
+                    .SendAsync("ConversationDeleted", conversation.Id);
+
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting conversation {ConversationId}", request.ConversationId);
+                return StatusCode(500, new { success = false, error = "An error occurred while deleting the conversation" });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAllConversations()
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var conversations = await _context.Conversations
+                    .Include(c => c.Messages)
+                    .Where(c => c.SeekerId == userId || c.OwnerId == userId)
+                    .ToListAsync();
+
+                foreach (var conversation in conversations)
+                {
+                    _context.Messages.RemoveRange(conversation.Messages);
+                    _context.Conversations.Remove(conversation);
+
+                    // Notify other user about conversation deletion
+                    var otherUserId = conversation.SeekerId == userId ? conversation.OwnerId : conversation.SeekerId;
+                    await _hubContext.Clients.Group(otherUserId.ToString())
+                        .SendAsync("ConversationDeleted", conversation.Id);
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting all conversations");
+                return StatusCode(500, new { success = false, error = "An error occurred while deleting all conversations" });
+            }
+        }
+
+        // Request models
+        public class DeleteMessageRequest
+        {
+            public int MessageId { get; set; }
+        }
+
+        public class DeleteConversationRequest
+        {
+            public int ConversationId { get; set; }
+        }
+
+        public class SendMessageRequest
+        {
+            public int ConversationId { get; set; }
+            public string Content { get; set; }
         }
 
         [HttpGet]
@@ -223,21 +348,56 @@ namespace CasaConnect.Controllers
             {
                 var userId = int.Parse(User.FindFirst("UserId").Value);
                 var unreadCount = await _context.Messages
-                    .CountAsync(m => m.ReceiverId == userId && !m.ReadAt.HasValue);
+                    .CountAsync(m =>
+                        m.ReceiverId == userId &&
+                        m.ReadAt == null);
 
-                return Ok(new { success = true, count = unreadCount });
+                return Json(new { success = true, count = unreadCount });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting unread message count");
-                return StatusCode(500, new { success = false, error = "An error occurred while getting unread count" });
+                return Json(new { success = false, error = "Error getting unread count" });
             }
         }
-    }
 
-    public class SendMessageRequest
-    {
-        public int ConversationId { get; set; }
-        public string Content { get; set; }
+        // In MessagesController.cs
+        [HttpPost]
+        public async Task<IActionResult> MarkMessageAsRead(int messageId)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var message = await _context.Messages
+                    .FirstOrDefaultAsync(m => m.Id == messageId && m.ReceiverId == userId);
+
+                if (message != null && message.ReadAt == null)
+                {
+                    message.ReadAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+
+                    // Get updated unread count
+                    var unreadCount = await _context.Messages
+                        .CountAsync(m => m.ReceiverId == userId && m.ReadAt == null);
+
+                    // Notify sender that message was read
+                    await _hubContext.Clients.Group(message.SenderId.ToString())
+                        .SendAsync("MessageRead", messageId);
+
+                    // Notify all user's connected clients about the updated count
+                    await _hubContext.Clients.Group(userId.ToString())
+                        .SendAsync("UnreadCountUpdated", unreadCount);
+
+                    return Ok(new { success = true, unreadCount = unreadCount });
+                }
+
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking message as read");
+                return StatusCode(500, new { success = false, error = "An error occurred" });
+            }
+        }
     }
 }

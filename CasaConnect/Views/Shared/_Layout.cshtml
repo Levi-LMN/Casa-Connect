@@ -147,21 +147,32 @@
                     });
 
                     // Function to update unread count
+                    
                     function updateUnreadCount() {
                         $.get('/Messages/GetUnreadCount')
                             .done(function (response) {
                                 if (response.success) {
-                                    if (response.count > 0) {
-                                        $('#unreadCount').text(response.count);
-                                        $('#unreadBadge').removeClass('d-none');
-                                    } else {
-                                        $('#unreadBadge').addClass('d-none');
-                                    }
+                                    updateUnreadBadge(response.count);
                                 }
                             })
                             .fail(function (error) {
                                 console.error('Error fetching unread count:', error);
                             });
+                    }
+
+                    // Add the shared handler
+                    connection.on("UnreadCountUpdated", function (count) {
+                        updateUnreadBadge(count);
+                    });
+
+                    // Add the shared helper function
+                    function updateUnreadBadge(count) {
+                        if (count > 0) {
+                            $('#unreadCount').text(count);
+                            $('#unreadBadge').removeClass('d-none');
+                        } else {
+                            $('#unreadBadge').addClass('d-none');
+                        }
                     }
 
                     // Update unread count on page load
