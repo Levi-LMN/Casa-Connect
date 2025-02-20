@@ -108,11 +108,24 @@
 
                     @if (User.Identity.IsAuthenticated)
                     {
-                        <a href="mailto:@Model.Owner.Email" class="btn btn-primary w-100">Contact Owner</a>
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h3 class="h5 mb-3">Contact Owner</h3>
+                                <form asp-controller="Messages" asp-action="StartConversation" method="post">
+                                    <input type="hidden" name="propertyId" value="@Model.Id" />
+                                    <button type="submit" class="btn btn-primary w-100">Start Conversation</button>
+                                </form>
+                            </div>
+                        </div>
                     }
                     else
                     {
-                        <a asp-controller="Account" asp-action="Login" class="btn btn-primary w-100">Login to Contact Owner</a>
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h3 class="h5 mb-3">Contact Owner</h3>
+                                <a asp-controller="Account" asp-action="Login" class="btn btn-primary w-100">Login to Contact Owner</a>
+                            </div>
+                        </div>
                     }
                 </div>
             </div>

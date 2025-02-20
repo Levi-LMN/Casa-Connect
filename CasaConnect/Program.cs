@@ -30,6 +30,9 @@ namespace CasaConnect
 
             builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); // Add PasswordHasher service
 
+            // Add SignalR Service
+            builder.Services.AddSignalR();
+
             var app = builder.Build();
 
             // Initialize the database (seeds the admin user)
@@ -56,9 +59,13 @@ namespace CasaConnect
             app.UseAuthentication();
             app.UseAuthorization();
 
+            // Map controllers
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+
+            // Map SignalR Hub
+            app.MapHub<MessageHub>("/messageHub");
 
             app.Run();
         }

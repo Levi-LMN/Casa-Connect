@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CasaConnect</title>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CasaConnect.styles.css" asp-append-version="true" />
@@ -25,6 +26,15 @@
                         </li>
                         @if (User.Identity.IsAuthenticated)
                         {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark position-relative" asp-controller="Messages" asp-action="Index">
+                                    Messages
+                                    <span id="unreadBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                        <span id="unreadCount">0</span>
+                                        <span class="visually-hidden">unread messages</span>
+                                    </span>
+                                </a>
+                            </li>
                             @if (User.IsInRole("Admin"))
                             {
                                 <li class="nav-item">
@@ -120,6 +130,53 @@
         setTimeout(function () {
             $('.alert').alert('close');
         }, 5000);
+
+        // Set up SignalR connection and unread messages count
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                $(document).ready(function () {
+                    // Initialize SignalR
+                    var connection = new signalR.HubConnectionBuilder()
+                        .withUrl("/messageHub")
+                        .build();
+
+                    // Start the connection
+                    connection.start().catch(function (err) {
+                        console.error(err.toString());
+                    });
+
+                    // Function to update unread count
+                    function updateUnreadCount() {
+                        $.get('/Messages/GetUnreadCount')
+                            .done(function (response) {
+                                if (response.success) {
+                                    if (response.count > 0) {
+                                        $('#unreadCount').text(response.count);
+                                        $('#unreadBadge').removeClass('d-none');
+                                    } else {
+                                        $('#unreadBadge').addClass('d-none');
+                                    }
+                                }
+                            })
+                            .fail(function (error) {
+                                console.error('Error fetching unread count:', error);
+                            });
+                    }
+
+                    // Update unread count on page load
+                    updateUnreadCount();
+
+                    // Listen for new messages
+                    connection.on("ReceiveMessage", function (message) {
+                        updateUnreadCount();
+                    });
+
+                    // Update count every minute
+                    setInterval(updateUnreadCount, 60000);
+                });
+            </text>
+        }
     </script>
 </body>
 </html>

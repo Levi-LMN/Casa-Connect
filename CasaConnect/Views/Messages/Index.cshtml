@@ -1,0 +1,48 @@
+﻿@model List<CasaConnect.Models.Conversation>
+
+@{
+    ViewData["Title"] = "My Messages";
+    var currentUserId = int.Parse(User.FindFirst("UserId").Value);
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">My Messages</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            You don't have any messages yet.
+        </div>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach (var conversation in Model)
+            {
+                var otherUser = currentUserId == conversation.SeekerId
+                ? conversation.Owner
+                : conversation.Seeker;
+                var lastMessage = conversation.Messages.OrderByDescending(m => m.SentAt).FirstOrDefault();
+
+                <a href="@Url.Action("Conversation", new { id = conversation.Id })"
+                   class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">@conversation.Property.Title</h5>
+                        <small>
+                            @(lastMessage?.SentAt.ToString("MMM dd, yyyy") ?? conversation.CreatedAt.ToString("MMM dd, yyyy"))
+                        </small>
+                    </div>
+                    <p class="mb-1">@otherUser.FirstName @otherUser.LastName</p>
+                    @if (lastMessage != null)
+                    {
+                        <small class="text-muted">
+                            @(lastMessage.Content.Length > 50
+                                ? lastMessage.Content.Substring(0, 47) + "..."
+                                : lastMessage.Content)
+                        </small>
+                    }
+                </a>
+            }
+        </div>
+    }
+</div>
