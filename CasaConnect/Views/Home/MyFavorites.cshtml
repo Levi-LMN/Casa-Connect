@@ -1,0 +1,59 @@
+﻿@model IEnumerable<CasaConnect.Models.Property>
+@{
+    ViewData["Title"] = "My Favorites";
+}
+<div class="container mt-4">
+    <h1>My Favorites</h1>
+    <div class="row">
+        @foreach (var property in Model)
+        {
+            <div class="col-md-4 mb-4" id="property-card-@property.Id">
+                <div class="card h-100">
+                    <div class="position-relative">
+                        @if (property.Images != null && property.Images.Any())
+                        {
+                            <img src="@property.Images.First().ImagePath" class="card-img-top" alt="Property image" style="height: 200px; object-fit: cover;">
+                        }
+                        <button class="btn btn-light position-absolute top-0 end-0 m-2 rounded-circle favorite-btn"
+                                data-property-id="@property.Id">
+                            <i class="bi bi-heart-fill text-danger"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">@property.Title</h5>
+                        <p class="card-text">@property.Price.ToString("C0")</p>
+                        <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.favorite-btn').click(function () {
+                var propertyId = $(this).data('property-id');
+                var card = $(`#property-card-${propertyId}`);
+
+                $.post('/Home/ToggleFavorite', { propertyId: propertyId }, function (response) {
+                    if (!response.isFavorited) {
+                        // Animate the card removal
+                        card.fadeOut(300, function () {
+                            card.remove();
+
+                            // If no more favorites, show empty state
+                            if ($('.col-md-4').length === 0) {
+                                $('.row').html('<div class="col-12 text-center py-5">' +
+                                    '<p class="text-muted">No favorites yet. Browse properties to add some!</p>' +
+                                    '<a href="/Home/Index" class="btn btn-primary mt-3">Browse Properties</a>' +
+                                    '</div>');
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

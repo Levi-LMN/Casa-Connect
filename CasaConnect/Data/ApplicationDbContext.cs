@@ -17,6 +17,8 @@ namespace CasaConnect.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
 
+        public DbSet<Favorite> Favorites { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -51,6 +53,18 @@ namespace CasaConnect.Data
                 .HasMany(c => c.Messages)
                 .WithOne(m => m.Conversation)
                 .HasForeignKey(m => m.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Favorite>()
+            .HasOne(f => f.User)
+            .WithMany()
+            .HasForeignKey(f => f.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Favorite>()
+                .HasOne(f => f.Property)
+                .WithMany()
+                .HasForeignKey(f => f.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CasaConnect</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -33,6 +34,11 @@
                                         <span id="unreadCount">0</span>
                                         <span class="visually-hidden">unread messages</span>
                                     </span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Home" asp-action="MyFavorites">
+                                    <i class="bi bi-heart"></i> My Favorites
                                 </a>
                             </li>
                             @if (User.IsInRole("Admin"))
@@ -147,7 +153,6 @@
                     });
 
                     // Function to update unread count
-                    
                     function updateUnreadCount() {
                         $.get('/Messages/GetUnreadCount')
                             .done(function (response) {

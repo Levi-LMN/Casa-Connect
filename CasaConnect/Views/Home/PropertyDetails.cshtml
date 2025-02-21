@@ -104,6 +104,18 @@
         <div class="col-md-4">
             <div class="card mb-4">
                 <div class="card-body">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div class="mb-4">
+                            <button id="favoriteButton"
+                                    class="btn @(ViewBag.IsFavorited ? "btn-danger" : "btn-outline-danger") w-100"
+                                    data-property-id="@Model.Id">
+                                <i class="bi @(ViewBag.IsFavorited ? "bi-heart-fill" : "bi-heart")"></i>
+                                <span>@(ViewBag.IsFavorited ? "Remove from Favorites" : "Add to Favorites")</span>
+                            </button>
+                        </div>
+                    }
+
                     <h3 class="h5 mb-3">Contact Information</h3>
                     <p class="mb-2">
                         <strong>Owner:</strong> @Model.Owner.Email
@@ -148,3 +160,26 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#favoriteButton').click(function () {
+                var propertyId = $(this).data('property-id');
+                var button = $(this);
+
+                $.post('/Home/ToggleFavorite', { propertyId: propertyId }, function (response) {
+                    if (response.isFavorited) {
+                        button.removeClass('btn-outline-danger').addClass('btn-danger');
+                        button.find('i').removeClass('bi-heart').addClass('bi-heart-fill');
+                        button.find('span').text('Remove from Favorites');
+                    } else {
+                        button.removeClass('btn-danger').addClass('btn-outline-danger');
+                        button.find('i').removeClass('bi-heart-fill').addClass('bi-heart');
+                        button.find('span').text('Add to Favorites');
+                    }
+                });
+            });
+        });
+    </script>
+}
