@@ -1,8 +1,447 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Find Your Dream Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-house-heart me-2 text-primary"></i>
+            <span class="fw-bold">CasaConnect</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Properties">Properties</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Search">Advanced Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Agents">Find Agents</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="resourcesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Resources
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="resourcesDropdown">
+                        <li><a class="dropdown-item" href="/Mortgage">Mortgage Calculator</a></li>
+                        <li><a class="dropdown-item" href="/Guide">Buyer's Guide</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/Blog">Real Estate Blog</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Contact">Contact Us</a>
+                </li>
+            </ul>
+            <div class="ms-lg-3 mt-3 mt-lg-0">
+                <a href="/Account/Login" class="btn btn-outline-primary me-2">Log In</a>
+                <a href="/Account/Register" class="btn btn-primary">Sign Up</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section with Search -->
+<header class="position-relative">
+    <div class="bg-image position-absolute w-100 h-100" style="background-image: url('/img/hero-home.jpg'); background-size: cover; background-position: center; filter: brightness(0.7);"></div>
+    <div class="container py-5">
+        <div class="row min-vh-50 align-items-center py-5">
+            <div class="col-lg-7 text-center text-lg-start">
+                <h1 class="display-4 fw-bold text-white mb-3">Find Your Perfect Home</h1>
+                <p class="lead text-white mb-4">Discover thousands of properties that match your preferences and budget. Your dream home is just a click away.</p>
+            </div>
+            <div class="col-lg-5">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body p-4">
+                        <h4 class="mb-4">Start Your Search</h4>
+                        <form>
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" placeholder="City, ZIP or Neighborhood">
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label for="minPrice" class="form-label">Min Price</label>
+                                    <select class="form-select" id="minPrice">
+                                        <option selected>Any</option>
+                                        <option>$100,000</option>
+                                        <option>$200,000</option>
+                                        <option>$300,000</option>
+                                        <option>$500,000</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="maxPrice" class="form-label">Max Price</label>
+                                    <select class="form-select" id="maxPrice">
+                                        <option selected>Any</option>
+                                        <option>$300,000</option>
+                                        <option>$500,000</option>
+                                        <option>$750,000</option>
+                                        <option>$1,000,000+</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label for="bedrooms" class="form-label">Beds</label>
+                                    <select class="form-select" id="bedrooms">
+                                        <option selected>Any</option>
+                                        <option>1+</option>
+                                        <option>2+</option>
+                                        <option>3+</option>
+                                        <option>4+</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="bathrooms" class="form-label">Baths</label>
+                                    <select class="form-select" id="bathrooms">
+                                        <option selected>Any</option>
+                                        <option>1+</option>
+                                        <option>2+</option>
+                                        <option>3+</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">Search Properties</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Featured Properties Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2 class="fw-bold">Featured Properties</h2>
+                <p class="text-muted">Handpicked homes to match your lifestyle</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="/Properties" class="btn btn-outline-primary">View All Properties</a>
+            </div>
+        </div>
+        <div class="row g-4">
+            <!-- Property Card 1 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="position-relative">
+                        <img src="/api/placeholder/400/250" alt="Modern Apartment" class="card-img-top">
+                        <span class="badge bg-primary position-absolute top-0 end-0 m-3">For Sale</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Modern Apartment with City View</h5>
+                        <h6 class="text-primary mb-3">$425,000</h6>
+                        <p class="card-text text-muted"><i class="bi bi-geo-alt me-2"></i>Downtown, Central City</p>
+                        <div class="d-flex justify-content-between text-muted mt-3">
+                            <span><i class="bi bi-house-door me-1"></i> 1,200 sq ft</span>
+                            <span><i class="bi bi-bed me-1"></i> 2 beds</span>
+                            <span><i class="bi bi-water me-1"></i> 2 baths</span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="/Properties/Detail/1" class="btn btn-sm btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Property Card 2 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="position-relative">
+                        <img src="/api/placeholder/400/250" alt="Family Home" class="card-img-top">
+                        <span class="badge bg-primary position-absolute top-0 end-0 m-3">For Sale</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Spacious Family Home with Garden</h5>
+                        <h6 class="text-primary mb-3">$675,000</h6>
+                        <p class="card-text text-muted"><i class="bi bi-geo-alt me-2"></i>Oakwood Heights, West End</p>
+                        <div class="d-flex justify-content-between text-muted mt-3">
+                            <span><i class="bi bi-house-door me-1"></i> 2,400 sq ft</span>
+                            <span><i class="bi bi-bed me-1"></i> 4 beds</span>
+                            <span><i class="bi bi-water me-1"></i> 3 baths</span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="/Properties/Detail/2" class="btn btn-sm btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Property Card 3 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="position-relative">
+                        <img src="/api/placeholder/400/250" alt="Luxury Villa" class="card-img-top">
+                        <span class="badge bg-info position-absolute top-0 end-0 m-3">For Rent</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Luxury Waterfront Villa</h5>
+                        <h6 class="text-primary mb-3">$3,500/month</h6>
+                        <p class="card-text text-muted"><i class="bi bi-geo-alt me-2"></i>Azure Shores, North Bay</p>
+                        <div class="d-flex justify-content-between text-muted mt-3">
+                            <span><i class="bi bi-house-door me-1"></i> 3,000 sq ft</span>
+                            <span><i class="bi bi-bed me-1"></i> 3 beds</span>
+                            <span><i class="bi bi-water me-1"></i> 3.5 baths</span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="/Properties/Detail/3" class="btn btn-sm btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">How It Works</h2>
+            <p class="text-muted lead">Finding your dream home has never been easier</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="p-3">
+                    <div class="bg-light p-4 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px;">
+                        <i class="bi bi-search fs-1 text-primary"></i>
+                    </div>
+                    <h4>Search Properties</h4>
+                    <p class="text-muted">Browse thousands of listings based on your criteria such as price, location, size, and amenities.</p>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="p-3">
+                    <div class="bg-light p-4 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px;">
+                        <i class="bi bi-calendar-check fs-1 text-primary"></i>
+                    </div>
+                    <h4>Schedule Viewings</h4>
+                    <p class="text-muted">Book appointments with real estate agents to visit properties that match your preferences.</p>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="p-3">
+                    <div class="bg-light p-4 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px;">
+                        <i class="bi bi-house-check fs-1 text-primary"></i>
+                    </div>
+                    <h4>Find Your Home</h4>
+                    <p class="text-muted">Get expert guidance throughout the buying process, from making an offer to closing the deal.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">What Our Clients Say</h2>
+            <p class="text-muted lead">Join hundreds of satisfied homeowners</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                        </div>
+                        <p class="card-text mb-4">"DreamDwelling made finding our first home so easy. The search tools were intuitive, and our agent was incredibly helpful throughout the entire process."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">JD</div>
+                            <div>
+                                <h6 class="mb-0">John & Diana Smith</h6>
+                                <small class="text-muted">First-time homebuyers</small>
+                            </div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                        </div>
+                        <p class="card-text mb-4">"As a real estate investor, I need reliable data and quick responses. This platform delivers both. I've purchased three properties through DreamDwelling and couldn't be happier."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">RJ</div>
+                            <div>
+                                <h6 class="mb-0">Robert Johnson</h6>
+                                <small class="text-muted">Property Investor</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                        </div>
+                        <p class="card-text mb-4">"We were relocating across the country and needed to find a home quickly. The virtual tours and detailed property information made it possible to buy our home without even visiting in person!"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">ML</div>
+                            <div>
+                                <h6 class="mb-0">Maria Lopez</h6>
+                                <small class="text-muted">Remote Buyer</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <h2 class="fw-bold">Ready to find your dream home?</h2>
+                <p class="lead mb-0">Create a free account and start your journey today.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="/Account/Register" class="btn btn-light btn-lg px-4">Get Started</a>
+                <a href="/Contact" class="btn btn-outline-light btn-lg ms-2 px-4">Contact Us</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Download App Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="fw-bold mb-3">Take DreamDwelling With You</h2>
+                <p class="lead text-muted mb-4">Download our mobile app to search properties, receive notifications, and schedule viewings on the go.</p>
+                <div class="d-flex flex-wrap">
+                    <a href="#" class="me-3 mb-3">
+                        <img src="/api/placeholder/150/50" alt="App Store" class="img-fluid">
+                    </a>
+                    <a href="#" class="mb-3">
+                        <img src="/api/placeholder/150/50" alt="Google Play" class="img-fluid">
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="/api/placeholder/500/400" alt="Mobile App" class="img-fluid rounded shadow-lg">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white pt-5 pb-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h5 class="fw-bold mb-4">DreamDwelling</h5>
+                <p class="small">Your trusted partner in finding the perfect home. With thousands of listings and expert agents, we make house hunting simple and enjoyable.</p>
+                <div class="d-flex mt-3">
+                    <a href="#" class="text-white me-3"><i class="bi bi-facebook fs-5"></i></a>
+                    <a href="#" class="text-white me-3"><i class="bi bi-twitter fs-5"></i></a>
+                    <a href="#" class="text-white me-3"><i class="bi bi-instagram fs-5"></i></a>
+                    <a href="#" class="text-white"><i class="bi bi-linkedin fs-5"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h5 class="fw-bold mb-4">Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="/Properties" class="text-white text-decoration-none">Properties</a></li>
+                    <li class="mb-2"><a href="/Search" class="text-white text-decoration-none">Advanced Search</a></li>
+                    <li class="mb-2"><a href="/Agents" class="text-white text-decoration-none">Find Agents</a></li>
+                    <li class="mb-2"><a href="/Mortgage" class="text-white text-decoration-none">Mortgage Calculator</a></li>
+                    <li class="mb-2"><a href="/Blog" class="text-white text-decoration-none">Real Estate Blog</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h5 class="fw-bold mb-4">Buyer Resources</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="/Guide" class="text-white text-decoration-none">First-Time Buyer Guide</a></li>
+                    <li class="mb-2"><a href="/Financing" class="text-white text-decoration-none">Financing Options</a></li>
+                    <li class="mb-2"><a href="/Neighborhood" class="text-white text-decoration-none">Neighborhood Guides</a></li>
+                    <li class="mb-2"><a href="/FAQ" class="text-white text-decoration-none">FAQs</a></li>
+                    <li class="mb-2"><a href="/HowTo" class="text-white text-decoration-none">How To Buy</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <h5 class="fw-bold mb-4">Contact Us</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="bi bi-geo-alt me-2"></i> 123 Real Estate Ave, Suite 500<br>Metro City, State 12345</li>
+                    <li class="mb-2"><i class="bi bi-telephone me-2"></i> (555) 123-4567</li>
+                    <li class="mb-2"><i class="bi bi-envelope me-2"></i> info@dreamdwelling.com</li>
+                </ul>
+                <h6 class="mt-4 mb-3">Subscribe to our newsletter</h6>
+                <form class="d-flex">
+                    <input type="email" class="form-control me-2" placeholder="Your email">
+                    <button type="submit" class="btn btn-primary">OK</button>
+                </form>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row align-items-center">
+            <div class="col-md-6 small">
+                <p class="mb-md-0">© 2025 DreamDwelling. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-md-end small">
+                <a href="/Privacy" class="text-white text-decoration-none me-3">Privacy Policy</a>
+                <a href="/Terms" class="text-white text-decoration-none me-3">Terms of Service</a>
+                <a href="/Sitemap" class="text-white text-decoration-none">Sitemap</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+@section Scripts {
+    <script>
+        // Initialize Bootstrap components
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enable all tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+            
+            // Input validation for search form
+            const searchForm = document.querySelector('form');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    // Could add validation logic here
+                    
+                    // Simulate search - in real app this would submit to backend
+                    window.location.href = '/Properties';
+                });
+            }
+        });
+    </script>
+}
