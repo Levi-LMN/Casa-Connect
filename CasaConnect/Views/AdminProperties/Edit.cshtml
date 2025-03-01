@@ -4,128 +4,166 @@
     ViewData["Title"] = "Edit Property";
 }
 
-<div class="container">
-    <h1>Edit Property</h1>
-    <h4>Owner: @Model.Owner.Email</h4>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Edit Property</h1>
+            <p class="text-muted">Owner: @Model.Owner.Email</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Properties
+        </a>
+    </div>
 
     <form asp-action="Edit" enctype="multipart/form-data">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         <input type="hidden" asp-for="Id" />
 
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Property Details</h5>
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 rounded-3 mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-4">Property Details</h5>
 
-                        <div class="mb-3">
-                            <label asp-for="Title" class="form-label"></label>
-                            <input asp-for="Title" class="form-control" />
-                            <span asp-validation-for="Title" class="text-danger"></span>
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label fw-semibold"></label>
+                            <input asp-for="Title" class="form-control form-control-lg" placeholder="Enter property title" />
+                            <span asp-validation-for="Title" class="text-danger mt-1 d-block"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Description" class="form-label"></label>
-                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-                            <span asp-validation-for="Description" class="text-danger"></span>
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold"></label>
+                            <textarea asp-for="Description" class="form-control" rows="5" placeholder="Describe the property"></textarea>
+                            <span asp-validation-for="Description" class="text-danger mt-1 d-block"></span>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label asp-for="Price" class="form-label fw-semibold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="Price" class="form-control" placeholder="0.00" />
+                                </div>
+                                <span asp-validation-for="Price" class="text-danger mt-1 d-block"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="SquareFootage" class="form-label fw-semibold"></label>
+                                <div class="input-group">
+                                    <input asp-for="SquareFootage" class="form-control" placeholder="0" />
+                                    <span class="input-group-text">sq ft</span>
+                                </div>
+                                <span asp-validation-for="SquareFootage" class="text-danger mt-1 d-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-6 col-md-3">
+                                <label asp-for="Bedrooms" class="form-label fw-semibold"></label>
+                                <input asp-for="Bedrooms" class="form-control" placeholder="0" />
+                                <span asp-validation-for="Bedrooms" class="text-danger mt-1 d-block"></span>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label asp-for="Bathrooms" class="form-label fw-semibold"></label>
+                                <input asp-for="Bathrooms" class="form-control" placeholder="0" />
+                                <span asp-validation-for="Bathrooms" class="text-danger mt-1 d-block"></span>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <label asp-for="PropertyType" class="form-label fw-semibold"></label>
+                                <select asp-for="PropertyType" class="form-select">
+                                    <option value="">Select Type</option>
+                                    <option value="House">House</option>
+                                    <option value="Apartment">Apartment</option>
+                                    <option value="Condo">Condo</option>
+                                    <option value="Townhouse">Townhouse</option>
+                                </select>
+                                <span asp-validation-for="PropertyType" class="text-danger mt-1 d-block"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-4">Location</h5>
+
+                        <div class="mb-4">
+                            <label asp-for="Address" class="form-label fw-semibold"></label>
+                            <input asp-for="Address" class="form-control" placeholder="Street address" />
+                            <span asp-validation-for="Address" class="text-danger mt-1 d-block"></span>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Price" class="form-label"></label>
-                                <input asp-for="Price" class="form-control" />
-                                <span asp-validation-for="Price" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="SquareFootage" class="form-label"></label>
-                                <input asp-for="SquareFootage" class="form-control" />
-                                <span asp-validation-for="SquareFootage" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Bedrooms" class="form-label"></label>
-                                <input asp-for="Bedrooms" class="form-control" />
-                                <span asp-validation-for="Bedrooms" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Bathrooms" class="form-label"></label>
-                                <input asp-for="Bathrooms" class="form-control" />
-                                <span asp-validation-for="Bathrooms" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="PropertyType" class="form-label"></label>
-                            <select asp-for="PropertyType" class="form-select">
-                                <option value="">Select Type</option>
-                                <option value="House">House</option>
-                                <option value="Apartment">Apartment</option>
-                                <option value="Condo">Condo</option>
-                                <option value="Townhouse">Townhouse</option>
-                            </select>
-                            <span asp-validation-for="PropertyType" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Address" class="form-label"></label>
-                            <input asp-for="Address" class="form-control" />
-                            <span asp-validation-for="Address" class="text-danger"></span>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="City" class="form-label"></label>
-                                <input asp-for="City" class="form-control" />
-                                <span asp-validation-for="City" class="text-danger"></span>
+                            <div class="col-md-5 mb-3">
+                                <label asp-for="City" class="form-label fw-semibold"></label>
+                                <input asp-for="City" class="form-control" placeholder="City" />
+                                <span asp-validation-for="City" class="text-danger mt-1 d-block"></span>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label asp-for="State" class="form-label"></label>
-                                <input asp-for="State" class="form-control" />
-                                <span asp-validation-for="State" class="text-danger"></span>
+                                <label asp-for="State" class="form-label fw-semibold"></label>
+                                <input asp-for="State" class="form-control" placeholder="State" />
+                                <span asp-validation-for="State" class="text-danger mt-1 d-block"></span>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="ZipCode" class="form-label"></label>
-                                <input asp-for="ZipCode" class="form-control" />
-                                <span asp-validation-for="ZipCode" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input asp-for="IsAvailable" class="form-check-input" />
-                                <label asp-for="IsAvailable" class="form-check-label"></label>
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="ZipCode" class="form-label fw-semibold"></label>
+                                <input asp-for="ZipCode" class="form-control" placeholder="Zip code" />
+                                <span asp-validation-for="ZipCode" class="text-danger mt-1 d-block"></span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Property Images</h5>
-                        <div class="mb-3">
-                            <label class="form-label">Upload New Images</label>
-                            <input type="file" name="newImages" multiple class="form-control" accept="image/*" />
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 rounded-3 mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-4">Availability</h5>
+                        <div class="form-check form-switch">
+                            <input asp-for="IsAvailable" class="form-check-input" type="checkbox" role="switch" />
+                            <label asp-for="IsAvailable" class="form-check-label fw-semibold"></label>
+                        </div>
+                        <p class="text-muted small mt-2">Toggle this switch to control whether the property appears in search results.</p>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-4">Property Images</h5>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Upload New Images</label>
+                            <div class="input-group">
+                                <input type="file" name="newImages" multiple class="form-control" accept="image/*" />
+                            </div>
+                            <small class="text-muted">You can select multiple images at once.</small>
                         </div>
 
                         @if (Model.Images != null && Model.Images.Any())
                         {
-                            <div class="row">
-                                @foreach (var image in Model.Images)
-                                {
-                                    <div class="col-6 mb-3">
-                                        <div class="position-relative">
-                                            <img src="@image.ImagePath" class="img-fluid rounded" alt="Property image" />
-                                            <div class="form-check position-absolute top-0 end-0 m-2">
-                                                <input type="checkbox" name="deleteImages" value="@image.Id" class="form-check-input" />
-                                                <label class="form-check-label">Delete</label>
+                            <div>
+                                <label class="form-label fw-semibold mb-3">Current Images</label>
+                                <div class="row g-2">
+                                    @foreach (var image in Model.Images)
+                                    {
+                                        <div class="col-6">
+                                            <div class="position-relative">
+                                                <img src="@image.ImagePath" class="img-fluid rounded shadow-sm" alt="Property image" />
+                                                <div class="position-absolute top-0 end-0 m-2">
+                                                    <div class="form-check bg-white rounded-circle shadow-sm p-2">
+                                                        <input type="checkbox" name="deleteImages" value="@image.Id" class="form-check-input" id="img-@image.Id" />
+                                                        <label class="form-check-label visually-hidden" for="img-@image.Id">Delete</label>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                }
+                                    }
+                                </div>
+                                <div class="text-muted small mt-2">Check the boxes to delete selected images.</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center p-4 bg-light rounded-3">
+                                <p class="text-muted mb-0">No images uploaded yet.</p>
                             </div>
                         }
                     </div>
@@ -133,11 +171,10 @@
             </div>
         </div>
 
-        <div class="row mt-3">
-            <div class="col">
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-            </div>
+        <div class="d-flex justify-content-end mt-4">
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-check-lg me-2"></i>Save Changes
+            </button>
         </div>
     </form>
 </div>
@@ -146,4 +183,10 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        // Optional: Preview uploaded images before submitting
+        document.querySelector('input[name="newImages"]').addEventListener('change', function (e) {
+            // Image preview functionality could be added here
+        });
+    </script>
 }
