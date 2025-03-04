@@ -7,108 +7,131 @@
     var isCurrentUserOwner = currentUserId != null && currentUserId == Model.Owner.Id.ToString();
 }
 
-<div class="container">
-    <nav aria-label="breadcrumb" class="mt-3">
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none">Home</a></li>
             <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
         </ol>
     </nav>
 
-    <div class="row">
-        <div class="col-md-8">
+    <div class="row g-4">
+        <div class="col-lg-8">
             @if (Model.Images != null && Model.Images.Any())
             {
-                <div id="propertyCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        @for (int i = 0; i < Model.Images.Count; i++)
+                <div class="position-relative mb-4 rounded overflow-hidden shadow-sm">
+                    <div id="propertyCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            @for (int i = 0; i < Model.Images.Count; i++)
+                            {
+                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                    <img src="@Model.Images[i].ImagePath" class="d-block w-100" alt="Property image"
+                                         style="height: 500px; object-fit: cover;">
+                                </div>
+                            }
+                        </div>
+                        @if (Model.Images.Count > 1)
                         {
-                            <div class="carousel-item @(i == 0 ? "active" : "")">
-                                <img src="@Model.Images[i].ImagePath" class="d-block w-100" alt="Property image" style="height: 400px; object-fit: cover;">
-                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
                         }
                     </div>
-                    @if (Model.Images.Count > 1)
-                    {
-                        <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                    }
+                    <div class="position-absolute top-0 end-0 p-3">
+                        <span class="badge bg-success fs-6 px-3 py-2 rounded-pill shadow">Available</span>
+                    </div>
                 </div>
             }
 
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h1 class="card-title h2 mb-3">@Model.Title</h1>
-                    <h2 class="h3 text-primary mb-4">@Model.Price.ToString("C0")</h2>
+            <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1 class="fs-2 fw-bold mb-0">@Model.Title</h1>
+                        <h2 class="fs-3 fw-bold text-primary mb-0">@Model.Price.ToString("C0")</h2>
+                    </div>
 
-                    <div class="row mb-4">
+                    <div class="row mb-4 g-3">
                         <div class="col-md-4">
-                            <div class="text-center">
-                                <div class="h5">@Model.Bedrooms</div>
+                            <div class="p-3 bg-light rounded-3 text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-door-open fs-4 me-2 text-primary"></i>
+                                    <span class="fs-4 fw-bold">@Model.Bedrooms</span>
+                                </div>
                                 <div class="text-muted">Bedrooms</div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="text-center">
-                                <div class="h5">@Model.Bathrooms</div>
+                            <div class="p-3 bg-light rounded-3 text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-droplet fs-4 me-2 text-primary"></i>
+                                    <span class="fs-4 fw-bold">@Model.Bathrooms</span>
+                                </div>
                                 <div class="text-muted">Bathrooms</div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="text-center">
-                                <div class="h5">@Model.SquareFootage</div>
+                            <div class="p-3 bg-light rounded-3 text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-house-door fs-4 me-2 text-primary"></i>
+                                    <span class="fs-4 fw-bold">@Model.SquareFootage</span>
+                                </div>
                                 <div class="text-muted">Square Feet</div>
                             </div>
                         </div>
                     </div>
 
-                    <h3 class="h5 mb-3">Description</h3>
-                    <p class="mb-4">@Model.Description</p>
+                    <div class="mb-4">
+                        <h3 class="fs-5 fw-bold mb-3 d-flex align-items-center">
+                            <i class="bi bi-info-circle me-2 text-primary"></i>
+                            Description
+                        </h3>
+                        <p class="mb-0 lh-lg">@Model.Description</p>
+                    </div>
 
-                    <h3 class="h5 mb-3">Property Details</h3>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <dl class="row">
-                                <dt class="col-sm-4">Property Type</dt>
-                                <dd class="col-sm-8">@Model.PropertyType</dd>
-
-                                <dt class="col-sm-4">Address</dt>
-                                <dd class="col-sm-8">
-                                    @Model.Address<br />
-                                    @Model.City, @Model.State @Model.ZipCode
-                                </dd>
-                            </dl>
-                        </div>
-                        <div class="col-md-6">
-                            <dl class="row">
-                                <dt class="col-sm-4">Listed</dt>
-                                <dd class="col-sm-8">@Model.CreatedAt.ToString("MMMM dd, yyyy")</dd>
-
-                                <dt class="col-sm-4">Status</dt>
-                                <dd class="col-sm-8">
-                                    <span class="badge bg-success">Available</span>
-                                </dd>
-                            </dl>
+                    <div>
+                        <h3 class="fs-5 fw-bold mb-3 d-flex align-items-center">
+                            <i class="bi bi-list-check me-2 text-primary"></i>
+                            Property Details
+                        </h3>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex mb-3">
+                                    <div class="text-muted" style="width: 130px;">Property Type:</div>
+                                    <div class="fw-medium">@Model.PropertyType</div>
+                                </div>
+                                <div class="d-flex">
+                                    <div class="text-muted" style="width: 130px;">Address:</div>
+                                    <div class="fw-medium">
+                                        @Model.Address<br />
+                                        @Model.City, @Model.State @Model.ZipCode
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex mb-3">
+                                    <div class="text-muted" style="width: 130px;">Listed On:</div>
+                                    <div class="fw-medium">@Model.CreatedAt.ToString("MMMM dd, yyyy")</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-body">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-3 mb-4 sticky-lg-top" style="top: 20px;">
+                <div class="card-body p-4">
                     @if (User.Identity.IsAuthenticated)
                     {
                         <div class="mb-4">
                             <button id="favoriteButton"
-                                    class="btn @(ViewBag.IsFavorited ? "btn-danger" : "btn-outline-danger") w-100"
+                                    class="btn @(ViewBag.IsFavorited ? "btn-danger" : "btn-outline-danger") w-100 py-2 fs-5 d-flex align-items-center justify-content-center gap-2"
                                     data-property-id="@Model.Id">
                                 <i class="bi @(ViewBag.IsFavorited ? "bi-heart-fill" : "bi-heart")"></i>
                                 <span>@(ViewBag.IsFavorited ? "Remove from Favorites" : "Add to Favorites")</span>
@@ -116,42 +139,62 @@
                         </div>
                     }
 
-                    <h3 class="h5 mb-3">Contact Information</h3>
-                    <p class="mb-2">
-                        <strong>Owner:</strong> @Model.Owner.Email
-                    </p>
+                    <div class="mb-4">
+                        <h3 class="fs-5 fw-bold mb-3 d-flex align-items-center">
+                            <i class="bi bi-person-circle me-2 text-primary"></i>
+                            Contact Information
+                        </h3>
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://ui-avatars.com/api/?name=@Model.Owner.Email" class="rounded-circle me-3" width="50" height="50" alt="Owner avatar">
+                            <div>
+                                <div class="text-muted fs-6">Listed by</div>
+                                <div class="fw-medium">@Model.Owner.Email</div>
+                            </div>
+                        </div>
+                    </div>
 
                     @if (User.Identity.IsAuthenticated)
                     {
                         @if (!isCurrentUserOwner)
                         {
-                            <div class="card mb-4">
-                                <div class="card-body">
-                                    <h3 class="h5 mb-3">Contact Owner</h3>
+                            <div class="card border bg-light rounded-3 mb-4">
+                                <div class="card-body p-4">
+                                    <h3 class="fs-5 fw-bold mb-3">Contact Owner</h3>
                                     <form asp-controller="Messages" asp-action="StartConversation" method="post">
                                         <input type="hidden" name="propertyId" value="@Model.Id" />
-                                        <button type="submit" class="btn btn-primary w-100">Start Conversation</button>
+                                        <button type="submit" class="btn btn-primary w-100 py-2 fs-5 d-flex align-items-center justify-content-center gap-2">
+                                            <i class="bi bi-chat-text"></i> Start Conversation
+                                        </button>
                                     </form>
                                 </div>
                             </div>
                         }
                         else
                         {
-                            <div class="card mb-4">
-                                <div class="card-body text-center">
-                                    <h5 class="text-primary">You Own This Property</h5>
-                                    <p class="text-muted">This is your property listing. You can edit or manage it from your dashboard.</p>
-                                    <a asp-controller="Properties" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary w-100">Edit Listing</a>
+                            <div class="card border bg-light rounded-3 mb-4">
+                                <div class="card-body p-4 text-center">
+                                    <div class="p-3">
+                                        <i class="bi bi-house-check text-primary fs-1"></i>
+                                        <h5 class="text-primary fw-bold mt-3">You Own This Property</h5>
+                                        <p class="text-muted">This is your property listing. You can edit or manage it from your dashboard.</p>
+                                        <a asp-controller="Properties" asp-action="Edit" asp-route-id="@Model.Id"
+                                           class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                                            <i class="bi bi-pencil"></i> Edit Listing
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         }
                     }
                     else
                     {
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <h3 class="h5 mb-3">Contact Owner</h3>
-                                <a asp-controller="Account" asp-action="Login" class="btn btn-primary w-100">Login to Contact Owner</a>
+                        <div class="card border bg-light rounded-3 mb-4">
+                            <div class="card-body p-4">
+                                <h3 class="fs-5 fw-bold mb-3">Contact Owner</h3>
+                                <a asp-controller="Account" asp-action="Login"
+                                   class="btn btn-primary w-100 py-2 fs-5 d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-box-arrow-in-right"></i> Login to Contact Owner
+                                </a>
                             </div>
                         </div>
                     }
