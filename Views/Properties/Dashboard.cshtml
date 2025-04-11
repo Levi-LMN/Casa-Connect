@@ -1,0 +1,167 @@
+﻿@model IEnumerable<CasaConnect.Models.Property>
+@{
+    ViewData["Title"] = "My Properties";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-0">My Properties</h1>
+            <p class="text-muted mb-0">Manage your property listings</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Add New Property
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-house-add display-1 text-muted"></i>
+            </div>
+            <h3>No Properties Listed Yet</h3>
+            <p class="text-muted mb-4">Get started by adding your first property listing.</p>
+            <a asp-action="Create" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle me-2"></i>Add Your First Property
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="position-relative">
+                            @{
+                                var primaryImage = item.Images?.FirstOrDefault(i => i.IsPrimary);
+                                var firstImage = item.Images?.FirstOrDefault();
+                                var imagePath = (primaryImage ?? firstImage)?.ImagePath ?? "/images/placeholder-property.jpg";
+                            }
+                            <img src="@imagePath"
+                                 class="card-img-top"
+                                 style="height: 200px; object-fit: cover;"
+                                 alt="@item.Title" />
+
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <span class="badge @(item.IsAvailable ? "bg-success" : "bg-danger")">
+                                    @(item.IsAvailable ? "Available" : "Not Available")
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title">@item.Title</h5>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-primary fw-bold fs-5">$@item.Price.ToString("N0")</span>
+                                <small class="text-muted">@item.PropertyType</small>
+                            </div>
+
+                            <p class="card-text small mb-2">
+                                <i class="bi bi-geo-alt text-muted me-1"></i>
+                                @item.Address, @item.City, @item.State @item.ZipCode
+                            </p>
+
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="small">
+                                    <i class="bi bi-door-closed text-muted me-1"></i>
+                                    @item.Bedrooms BD
+                                </span>
+                                <span class="small">
+                                    <i class="bi bi-water text-muted me-1"></i>
+                                    @item.Bathrooms BA
+                                </span>
+                                <span class="small">
+                                    <i class="bi bi-arrows-angle-expand text-muted me-1"></i>
+                                    @item.SquareFootage.ToString("N0") SF
+                                </span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <p class="card-text small text-muted">
+                                    @(item.Description.Length > 100 ? item.Description[..100] + "..." : item.Description)
+                                </p>
+                            }
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Updated @(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? item.CreatedAt.ToString("MMM dd, yyyy"))
+                                </small>
+                                <div class="btn-group">
+                                    <a asp-action="Edit"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil me-1"></i>Edit
+                                    </a>
+                                    <a asp-action="Details"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-info-circle me-1"></i>Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="mt-4 text-center">
+            <p class="text-muted mb-0">
+                Showing @Model.Count() @(Model.Count() == 1 ? "property" : "properties")
+            </p>
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        .card {
+            transition: transform 0.2s ease-in-out;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+            }
+
+        .btn-group .btn {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function () {
+            $('.alert').alert('close');
+        }, 5000);
+    </script>
+}

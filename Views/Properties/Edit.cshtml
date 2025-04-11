@@ -1,0 +1,185 @@
+﻿@model CasaConnect.Models.Property
+@{
+    ViewData["Title"] = "Edit Property";
+}
+
+<div class="container">
+    <h2>Edit Property</h2>
+    <form asp-action="Edit" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Id" />
+        
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" required />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" type="number" class="form-control" required />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Address" class="form-label"></label>
+            <input asp-for="Address" class="form-control" required />
+            <span asp-validation-for="Address" class="text-danger"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="City" class="form-label"></label>
+                <input asp-for="City" class="form-control" required />
+                <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="State" class="form-label"></label>
+                <input asp-for="State" class="form-control" required />
+                <span asp-validation-for="State" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="ZipCode" class="form-label"></label>
+                <input asp-for="ZipCode" class="form-control" required />
+                <span asp-validation-for="ZipCode" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="Bedrooms" class="form-label"></label>
+                <input asp-for="Bedrooms" type="number" class="form-control" required />
+                <span asp-validation-for="Bedrooms" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="Bathrooms" class="form-label"></label>
+                <input asp-for="Bathrooms" type="number" class="form-control" required />
+                <span asp-validation-for="Bathrooms" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="SquareFootage" class="form-label"></label>
+                <input asp-for="SquareFootage" type="number" class="form-control" required />
+                <span asp-validation-for="SquareFootage" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="PropertyType" class="form-label"></label>
+            <select asp-for="PropertyType" class="form-select" required>
+                <option value="">Select Property Type</option>
+                <option value="House">House</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Condo">Condo</option>
+                <option value="Townhouse">Townhouse</option>
+            </select>
+            <span asp-validation-for="PropertyType" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="IsAvailable" class="form-label"></label>
+            <div class="form-check">
+                <input asp-for="IsAvailable" class="form-check-input" />
+                <label class="form-check-label" for="IsAvailable">Property is available for rent</label>
+            </div>
+            <span asp-validation-for="IsAvailable" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Current Images:</label>
+            <div class="d-flex flex-wrap" id="imageContainer">
+                @if (Model.Images != null)
+                {
+                    @foreach (var image in Model.Images)
+                    {
+                        <div class="me-2 mb-2 position-relative image-item" data-image-id="@image.Id">
+                            <img src="@image.ImagePath" class="img-thumbnail" width="100" height="100" alt="Property Image" />
+                            <div class="image-overlay">
+                                <input type="checkbox" name="deleteImages" value="@image.Id" class="delete-checkbox" />
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+            @if (Model.Images != null && Model.Images.Any())
+            {
+                <div class="mt-2">
+                    <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBtn">Delete Selected Images</button>
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Upload New Images:</label>
+            <input type="file" name="newImages" multiple class="form-control" accept="image/*" />
+            <small class="text-muted">You can select multiple images. Supported formats: JPG, PNG, GIF</small>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a asp-action="Dashboard" class="btn btn-secondary ms-2">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .image-item {
+        position: relative;
+        display: inline-block;
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 2px;
+        border-radius: 3px;
+    }
+
+    .delete-checkbox {
+        cursor: pointer;
+    }
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Handle individual image selection
+            $('.delete-checkbox').change(function() {
+                updateDeleteButtonVisibility();
+            });
+
+            // Update delete button visibility based on selections
+            function updateDeleteButtonVisibility() {
+                var hasSelectedImages = $('.delete-checkbox:checked').length > 0;
+                $('#deleteSelectedBtn').toggle(hasSelectedImages);
+            }
+
+            // Initialize delete button visibility
+            updateDeleteButtonVisibility();
+
+            // Handle confirmation before form submission
+            $('form').submit(function(e) {
+                var selectedImages = $('.delete-checkbox:checked').length;
+                if (selectedImages > 0) {
+                    if (!confirm(`Are you sure you want to delete ${selectedImages} selected image(s)? This action cannot be undone.`)) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                return true;
+            });
+        });
+    </script>
+}

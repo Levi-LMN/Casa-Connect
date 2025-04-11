@@ -1,0 +1,489 @@
+﻿@model IEnumerable<CasaConnect.Models.Property>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<!-- Hero Section -->
+<div class="container py-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <h1 class="display-4 fw-bold mb-2">CasaConnect</h1>
+            <p class="lead text-secondary mb-5">Find your perfect home today</p>
+
+            <!-- Search Form -->
+            <form asp-action="Index" method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-5">
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <select name="city" class="form-select form-select-lg border-0 bg-light" aria-label="City">
+                            <option value="">Select City</option>
+                            @{
+                                var cities = Model.Select(p => p.City).Distinct().OrderBy(c => c);
+                                foreach (var city in cities)
+                                {
+                                    <option value="@city">@city</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="propertyType" class="form-select form-select-lg border-0 bg-light" aria-label="Property Type">
+                            <option value="">Property Type</option>
+                            @{
+                                var propertyTypes = Model.Select(p => p.PropertyType).Distinct().OrderBy(t => t);
+                                foreach (var type in propertyTypes)
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 text-white">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Property Listings -->
+<div class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 fw-bold">Featured Properties</h2>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Sort by: Latest
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item sort-option" href="#" data-sort="latest">Latest</a></li>
+                <li><a class="dropdown-item sort-option" href="#" data-sort="price-asc">Price: Low to High</a></li>
+                <li><a class="dropdown-item sort-option" href="#" data-sort="price-desc">Price: High to Low</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row g-4" id="properties-container">
+        @foreach (var property in Model)
+        {
+            var carouselId = $"propertyCarousel{property.Id}";
+            var isFavorited = false;
+
+            if (User.Identity.IsAuthenticated)
+            {
+                isFavorited = ViewBag.Favorites != null && ViewBag.Favorites.Contains(property.Id);
+            }
+
+            <div class="col-md-6 col-lg-4 mb-4 property-card"
+                 data-price="@property.Price"
+                 data-date="@property.CreatedAt.Ticks"
+                 data-city="@property.City"
+                 data-type="@property.PropertyType">
+                <div class="card border-0 shadow-sm rounded-4 h-100 transition-hover">
+                    <div class="position-relative">
+                        @if (property.Images != null && property.Images.Any())
+                        {
+                            <div id="@carouselId" class="carousel slide rounded-top-4 overflow-hidden" data-bs-ride="carousel">
+                                <div class="carousel-inner">
+                                    @foreach (var image in property.Images.Select((value, index) => new { value, index }))
+                                    {
+                                        <div class="carousel-item @(image.index == 0 ? "active" : "")">
+                                            <img src="@image.value.ImagePath" class="card-img-top" alt="@property.Title"
+                                                 style="height: 280px; object-fit: cover;">
+                                        </div>
+                                    }
+                                </div>
+                                @if (property.Images.Count > 1)
+                                {
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#@carouselId" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#@carouselId" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                }
+
+                                <!-- Image indicators -->
+                                <div class="carousel-indicators">
+                                    @for (var i = 0; i < property.Images.Count; i++)
+                                    {
+                                        <button type="button"
+                                                data-bs-target="#@carouselId"
+                                                data-bs-slide-to="@i"
+                                                class="@(i == 0 ? "active" : "")"
+                                                aria-current="@(i == 0 ? "true" : "false")"
+                                                aria-label="Slide @(i + 1)">
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Image count badge -->
+                            <span class="position-absolute bottom-0 end-0 mb-3 me-3 badge bg-dark bg-opacity-75 rounded-pill px-2 py-1">
+                                <i class="bi bi-images"></i> @property.Images.Count
+                            </span>
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-light rounded-top-4 d-flex align-items-center justify-content-center" style="height: 280px;">
+                                <span class="text-muted small">No Image Available</span>
+                            </div>
+                        }
+
+                        <!-- Property type badge -->
+                        <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-white text-dark shadow-sm px-3 py-2">
+                            @property.PropertyType
+                        </span>
+                    </div>
+
+                    <div class="card-body px-4 py-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-semibold mb-0">@property.Title</h5>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <button class="btn btn-sm btn-outline-secondary rounded-circle p-1 favorite-btn"
+                                        data-property-id="@property.Id"
+                                        data-is-favorited="@isFavorited.ToString().ToLower()">
+                                    <i class="bi @(isFavorited ? "bi-heart-fill text-danger" : "bi-heart")"></i>
+                                </button>
+                            }
+                        </div>
+
+                        <p class="card-text text-muted small mb-3">
+                            <i class="bi bi-geo-alt-fill"></i> @property.City, @property.State
+                        </p>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="h4 fw-bold text-primary mb-0">@property.Price.ToString("C0")</span>
+                        </div>
+
+                        <div class="row g-0 text-center mb-4">
+                            <div class="col">
+                                <div class="feature-icon bg-light rounded-circle p-2 mb-2 mx-auto" style="width: 36px; height: 36px;">
+                                    <i class="bi bi-house-door text-primary"></i>
+                                </div>
+                                <span class="fw-medium d-block">@property.Bedrooms</span>
+                                <small class="text-muted">Bedrooms</small>
+                            </div>
+                            <div class="col">
+                                <div class="feature-icon bg-light rounded-circle p-2 mb-2 mx-auto" style="width: 36px; height: 36px;">
+                                    <i class="bi bi-droplet text-primary"></i>
+                                </div>
+                                <span class="fw-medium d-block">@property.Bathrooms</span>
+                                <small class="text-muted">Bathrooms</small>
+                            </div>
+                            <div class="col">
+                                <div class="feature-icon bg-light rounded-circle p-2 mb-2 mx-auto" style="width: 36px; height: 36px;">
+                                    <i class="bi bi-rulers text-primary"></i>
+                                </div>
+                                <span class="fw-medium d-block">@property.SquareFootage</span>
+                                <small class="text-muted">Sq.Ft</small>
+                            </div>
+                        </div>
+
+                        <a asp-action="PropertyDetails" asp-route-id="@property.Id" class="btn btn-primary w-100 rounded-pill py-2">View Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @{
+        var totalPages = Math.Ceiling((double)Model.Count() / 9);
+        if (totalPages > 1)
+        {
+            <div class="d-flex justify-content-center mt-5">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination" id="pagination">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Previous" id="prev-page">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == 1 ? "active" : "")">
+                                <a class="page-link page-number" href="#" data-page="@i">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(totalPages <= 1 ? "disabled" : "")">
+                            <a class="page-link" href="#" aria-label="Next" id="next-page">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize all carousels with custom options
+            var carousels = document.querySelectorAll('.carousel');
+            carousels.forEach(function (carousel) {
+                new bootstrap.Carousel(carousel, {
+                    interval: 4000,
+                    wrap: true
+                });
+            });
+
+            // Current page
+            let currentPage = 1;
+            const itemsPerPage = 9;
+            const propertyCards = document.querySelectorAll('.property-card');
+            const totalPages = Math.ceil(propertyCards.length / itemsPerPage);
+
+            // Favorite button toggle with AJAX
+            const favoriteButtons = document.querySelectorAll('.favorite-btn');
+            favoriteButtons.forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                                    const propertyId = this.getAttribute('data-property-id');
+                        const isFavorited = this.getAttribute('data-is-favorited') === 'true';
+                        const icon = this.querySelector('i');
+                        const button = this;
+
+                        fetch('/Home/ToggleFavorite', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({ propertyId: propertyId })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.isFavorited) {
+                                    icon.classList.replace('bi-heart', 'bi-heart-fill');
+                                    icon.classList.add('text-danger');
+                                    button.setAttribute('data-is-favorited', 'true');
+                                } else {
+                                    icon.classList.replace('bi-heart-fill', 'bi-heart');
+                                    icon.classList.remove('text-danger');
+                                    button.setAttribute('data-is-favorited', 'false');
+                                }
+                            })
+                            .catch(error => console.error('Error:', error));
+            </text>
+        }
+        else
+        {
+            <text>
+                            window.location.href = '/Identity/Account/Login?ReturnUrl=' + encodeURIComponent(window.location.pathname);
+            </text>
+        }
+                        });
+            });
+
+            // Hover effect on property cards
+            const cards = document.querySelectorAll('.transition-hover');
+            cards.forEach(function (card) {
+                card.addEventListener('mouseenter', function () {
+                    this.classList.add('shadow');
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.transition = 'all 0.3s ease';
+                });
+
+                card.addEventListener('mouseleave', function () {
+                    this.classList.remove('shadow');
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Sorting functionality
+            const sortOptions = document.querySelectorAll('.sort-option');
+            sortOptions.forEach(function (option) {
+                option.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const sortBy = this.getAttribute('data-sort');
+                    const propertiesContainer = document.getElementById('properties-container');
+                    const properties = Array.from(propertiesContainer.querySelectorAll('.property-card'));
+
+                    properties.sort(function (a, b) {
+                        if (sortBy === 'latest') {
+                            return parseInt(b.getAttribute('data-date')) - parseInt(a.getAttribute('data-date'));
+                        } else if (sortBy === 'price-asc') {
+                            return parseFloat(a.getAttribute('data-price')) - parseFloat(b.getAttribute('data-price'));
+                        } else if (sortBy === 'price-desc') {
+                            return parseFloat(b.getAttribute('data-price')) - parseFloat(a.getAttribute('data-price'));
+                        }
+                    });
+
+                    // Update dropdown text
+                    const dropdownButton = document.querySelector('.dropdown-toggle');
+                    if (sortBy === 'latest') {
+                        dropdownButton.textContent = 'Sort by: Latest';
+                    } else if (sortBy === 'price-asc') {
+                        dropdownButton.textContent = 'Sort by: Price: Low to High';
+                    } else if (sortBy === 'price-desc') {
+                        dropdownButton.textContent = 'Sort by: Price: High to Low';
+                    }
+
+                    // Clear container and append sorted items
+                    propertiesContainer.innerHTML = '';
+                    properties.forEach(function (property) {
+                        propertiesContainer.appendChild(property);
+                    });
+
+                    // Reset pagination to first page after sorting
+                    showPage(1);
+                });
+            });
+
+            // Pagination functionality
+            function showPage(page) {
+                currentPage = page;
+
+                // Hide all property cards
+                propertyCards.forEach(card => {
+                    card.style.display = 'none';
+                });
+
+                // Show only the cards for the current page
+                const startIndex = (page - 1) * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, propertyCards.length);
+
+                for (let i = startIndex; i < endIndex; i++) {
+                    propertyCards[i].style.display = 'block';
+                }
+
+                // Update pagination buttons
+                const pageItems = document.querySelectorAll('.page-number');
+                pageItems.forEach(item => {
+                    item.parentElement.classList.remove('active');
+                    if (parseInt(item.getAttribute('data-page')) === page) {
+                        item.parentElement.classList.add('active');
+                    }
+                });
+
+                // Update prev/next buttons
+                const prevButton = document.getElementById('prev-page');
+                const nextButton = document.getElementById('next-page');
+
+                if (prevButton && nextButton) {
+                    if (page === 1) {
+                        prevButton.parentElement.classList.add('disabled');
+                    } else {
+                        prevButton.parentElement.classList.remove('disabled');
+                    }
+
+                    if (page === totalPages || totalPages === 0) {
+                        nextButton.parentElement.classList.add('disabled');
+                    } else {
+                        nextButton.parentElement.classList.remove('disabled');
+                    }
+                }
+
+                // Scroll to top of property container
+                document.getElementById('properties-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // Add event listeners to pagination buttons
+            const pageNumbers = document.querySelectorAll('.page-number');
+            pageNumbers.forEach(function (number) {
+                number.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const page = parseInt(this.getAttribute('data-page'));
+                    showPage(page);
+                });
+            });
+
+            // Prev/Next pagination buttons
+            const prevPage = document.getElementById('prev-page');
+            const nextPage = document.getElementById('next-page');
+
+            if (prevPage) {
+                prevPage.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        showPage(currentPage - 1);
+                    }
+                });
+            }
+
+            if (nextPage) {
+                nextPage.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        showPage(currentPage + 1);
+                    }
+                });
+            }
+
+            // Initialize pagination
+            if (propertyCards.length > itemsPerPage) {
+                showPage(1);
+            }
+        });
+    </script>
+
+    <!-- Add to your main CSS file -->
+    <style>
+        .btn-primary {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+            .btn-primary:hover {
+                background-color: #1e40af;
+                border-color: #1e40af;
+            }
+
+        .text-primary {
+            color: #2563eb !important;
+        }
+
+        .bg-primary {
+            background-color: #2563eb !important;
+        }
+
+        .carousel-indicators {
+            margin-bottom: 0.5rem;
+        }
+
+            .carousel-indicators button {
+                width: 8px !important;
+                height: 8px !important;
+                border-radius: 50%;
+                background-color: rgba(255, 255, 255, 0.5);
+            }
+
+                .carousel-indicators button.active {
+                    background-color: white;
+                }
+
+        .page-item.active .page-link {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .page-link {
+            color: #2563eb;
+        }
+
+        .feature-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .feature-icon i {
+                font-size: 1.1rem;
+            }
+
+        /* Add a smooth transition for property cards */
+        .property-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+    </style>
+}
