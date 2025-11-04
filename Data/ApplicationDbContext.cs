@@ -47,6 +47,12 @@ namespace CasaConnect.Data
                     .WithMany(u => u.Properties)
                     .HasForeignKey(p => p.OwnerId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                // ✅ FIXED: Explicitly configure Images relationship
+                entity.HasMany(p => p.Images)
+                    .WithOne(pi => pi.Property)
+                    .HasForeignKey(pi => pi.PropertyId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // PropertyImage entity configuration
@@ -56,9 +62,9 @@ namespace CasaConnect.Data
                 entity.Property(pi => pi.ImagePath).IsRequired();
                 entity.Property(pi => pi.UploadedAt).IsRequired();
 
-                // Explicitly configure the relationship
+                // ✅ FIXED: Configure the inverse relationship
                 entity.HasOne(pi => pi.Property)
-                    .WithMany() // Or .WithMany(p => p.Images) if Property has Images collection
+                    .WithMany(p => p.Images)  // ✅ Must match the Property.Images property
                     .HasForeignKey(pi => pi.PropertyId)
                     .IsRequired()
                     .OnDelete(DeleteBehavior.Cascade);

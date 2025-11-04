@@ -1,212 +1,140 @@
 ﻿@model CasaConnect.Models.Property
+
 @{
-    ViewData["Title"] = Model.Title;
+    ViewData["Title"] = "Property Details";
 }
 
-<div class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-action="Dashboard">My Properties</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
-        </ol>
-    </nav>
+<div class="container">
+    <h1>Property Details</h1>
 
     <div class="row">
-        <!-- Image Gallery Section -->
-        <div class="col-md-8 mb-4">
-            @if (Model.Images != null && Model.Images.Any())
-            {
-                <div class="image-gallery">
-                    <!-- Main Image -->
-                    <div class="main-image mb-3">
-                        <img id="mainImage"
-                             src="@Model.Images.FirstOrDefault()?.ImagePath"
-                             class="img-fluid rounded w-100"
-                             style="height: 400px; object-fit: cover;"
-                             alt="Main property image">
-                    </div>
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Title</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Owner: @Model.Owner.Email</h6>
 
-                    <!-- Thumbnails -->
-                    <div class="thumbnails-container">
-                        <div class="d-flex gap-2 overflow-auto pb-2">
-                            @foreach (var image in Model.Images)
+                    @if (Model.Images != null && Model.Images.Any())
+                    {
+                        var imagesList = Model.Images.ToList();
+                        <div id="propertyCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                @for (int i = 0; i < imagesList.Count; i++)
+                                {
+                                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                                        <img src="@imagesList[i].ImagePath" class="d-block w-100" alt="Property image" style="max-height: 500px; object-fit: cover;">
+                                    </div>
+                                }
+                            </div>
+                            @if (imagesList.Count > 1)
                             {
-                                <div class="thumbnail-wrapper" style="min-width: 100px;">
-                                    <img src="@image.ImagePath"
-                                         class="thumbnail img-thumbnail @(image == Model.Images.First() ? "active" : "")"
-                                         style="height: 100px; object-fit: cover; cursor: pointer;"
-                                         alt="Property thumbnail"
-                                         data-full-image="@image.ImagePath"
-                                         onclick="updateMainImage(this)">
-                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
                             }
                         </div>
+                    }
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Property Information</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">Price</dt>
+                                <dd class="col-sm-8">@Model.Price.ToString("C")</dd>
+
+                                <dt class="col-sm-4">Type</dt>
+                                <dd class="col-sm-8">@Model.PropertyType</dd>
+
+                                <dt class="col-sm-4">Status</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge @(Model.IsAvailable ? "bg-success" : "bg-danger")">
+                                        @(Model.IsAvailable ? "Available" : "Not Available")
+                                    </span>
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Property Features</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">Bedrooms</dt>
+                                <dd class="col-sm-8">@Model.Bedrooms</dd>
+
+                                <dt class="col-sm-4">Bathrooms</dt>
+                                <dd class="col-sm-8">@Model.Bathrooms</dd>
+
+                                <dt class="col-sm-4">Square Ft</dt>
+                                <dd class="col-sm-8">@Model.SquareFootage</dd>
+                            </dl>
+                        </div>
                     </div>
+
+                    <h6>Description</h6>
+                    <p class="card-text">@Model.Description</p>
                 </div>
-            }
-            else
-            {
-                <img src="/images/placeholder-property.jpg"
-                     class="img-fluid rounded mb-4"
-                     style="width: 100%; height: 400px; object-fit: cover;"
-                     alt="Property placeholder image">
-            }
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6>Location</h6>
+                    <address>
+                        @Model.Address<br />
+                        @Model.City, @Model.State @Model.ZipCode
+                    </address>
+                </div>
+            </div>
         </div>
 
-        <!-- Property Information Section -->
         <div class="col-md-4">
-            <div class="card shadow-sm">
+            <div class="card mb-3">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h1 class="h3 mb-0">@Model.Title</h1>
-                        <span class="badge @(Model.IsAvailable ? "bg-success" : "bg-danger")">
-                            @(Model.IsAvailable ? "Available" : "Not Available")
-                        </span>
-                    </div>
+                    <h6>Listing Information</h6>
+                    <dl class="row">
+                        <dt class="col-sm-4">Created</dt>
+                        <dd class="col-sm-8">@Model.CreatedAt.ToString("MM/dd/yyyy")</dd>
 
-                    <h2 class="h4 text-primary mb-3">$@Model.Price.ToString("N0")</h2>
+                        <dt class="col-sm-4">Updated</dt>
+                        <dd class="col-sm-8">@(Model.UpdatedAt?.ToString("MM/dd/yyyy") ?? "Never")</dd>
 
-                    <div class="mb-4">
-                        <p class="mb-2">
-                            <i class="bi bi-geo-alt text-muted me-2"></i>
-                            @Model.Address<br />
-                            <span class="ms-4">@Model.City, @Model.State @Model.ZipCode</span>
-                        </p>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-4">
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-door-closed text-muted me-2"></i>
-                                    <div>
-                                        <small class="text-muted d-block">Bedrooms</small>
-                                        <span class="fw-bold">@Model.Bedrooms</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-water text-muted me-2"></i>
-                                    <div>
-                                        <small class="text-muted d-block">Bathrooms</small>
-                                        <span class="fw-bold">@Model.Bathrooms</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-arrows-angle-expand text-muted me-2"></i>
-                                    <div>
-                                        <small class="text-muted d-block">Area</small>
-                                        <span class="fw-bold">@Model.SquareFootage.ToString("N0") SF</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p class="mb-2">
-                            <i class="bi bi-house text-muted me-2"></i>
-                            <span class="text-muted">Property Type:</span>
-                            <span class="fw-bold ms-1">@Model.PropertyType</span>
-                        </p>
-                    </div>
-
-                    <div class="mb-4">
-                        <h3 class="h5 mb-3">Description</h3>
-                        <p class="mb-0">@Model.Description</p>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <div class="d-flex justify-content-between align-items-center text-muted small mb-4">
-                        <span>
-                            <i class="bi bi-calendar me-1"></i>
-                            Listed on @Model.CreatedAt.ToString("MMM dd, yyyy")
-                        </span>
-                        @if (Model.UpdatedAt.HasValue)
-                        {
-                            <span>
-                                <i class="bi bi-clock me-1"></i>
-                                Updated @Model.UpdatedAt.Value.ToString("MMM dd, yyyy")
-                            </span>
-                        }
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
-                            <i class="bi bi-pencil me-2"></i>Edit Property
-                        </a>
-                        <a asp-action="Dashboard" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-2"></i>Back to Properties
-                        </a>
-                    </div>
+                        <dt class="col-sm-4">Owner ID</dt>
+                        <dd class="col-sm-8">@Model.OwnerId</dd>
+                    </dl>
                 </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit Property</a>
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    Delete Property
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-@section Styles {
-    <style>
-        .thumbnails-container {
-            scrollbar-width: thin;
-            scrollbar-color: #dee2e6 #ffffff;
-        }
-
-            .thumbnails-container::-webkit-scrollbar {
-                height: 6px;
-            }
-
-            .thumbnails-container::-webkit-scrollbar-track {
-                background: #ffffff;
-            }
-
-            .thumbnails-container::-webkit-scrollbar-thumb {
-                background-color: #dee2e6;
-                border-radius: 3px;
-            }
-
-        .thumbnail {
-            transition: all 0.2s ease-in-out;
-            opacity: 0.7;
-        }
-
-            .thumbnail:hover {
-                opacity: 1;
-            }
-
-            .thumbnail.active {
-                opacity: 1;
-                border-color: #0d6efd;
-            }
-
-        .main-image {
-            transition: opacity 0.3s ease-in-out;
-        }
-
-            .main-image img {
-                border-radius: 0.5rem;
-            }
-    </style>
-}
-
-@section Scripts {
-    <script>
-        function updateMainImage(thumbnail) {
-            const mainImage = document.getElementById('mainImage');
-            const fullImageUrl = thumbnail.getAttribute('data-full-image');
-
-            // Update main image
-            mainImage.style.opacity = '0';
-            setTimeout(() => {
-                mainImage.src = fullImageUrl;
-                mainImage.style.opacity = '1';
-            }, 300);
-
-            // Update active state of thumbnails
-            document.querySelectorAll('.thumbnail').forEach(thumb => {
-                thumb.classList.remove('active');
-            });
-            thumbnail.classList.add('active');
-        }
-    </script>
-}
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this property? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

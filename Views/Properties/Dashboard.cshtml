@@ -1,16 +1,14 @@
 ﻿@model IEnumerable<CasaConnect.Models.Property>
+
 @{
     ViewData["Title"] = "My Properties";
 }
 
-<div class="container py-4">
+<div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h2 mb-0">My Properties</h1>
-            <p class="text-muted mb-0">Manage your property listings</p>
-        </div>
+        <h1>My Properties</h1>
         <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>Add New Property
+            <i class="bi bi-plus-circle"></i> Add New Property
         </a>
     </div>
 
@@ -32,106 +30,162 @@
 
     @if (!Model.Any())
     {
-        <div class="text-center py-5">
-            <div class="mb-4">
-                <i class="bi bi-house-add display-1 text-muted"></i>
-            </div>
-            <h3>No Properties Listed Yet</h3>
-            <p class="text-muted mb-4">Get started by adding your first property listing.</p>
-            <a asp-action="Create" class="btn btn-primary btn-lg">
-                <i class="bi bi-plus-circle me-2"></i>Add Your First Property
-            </a>
+        <div class="alert alert-info">
+            <h4 class="alert-heading">No Properties Yet</h4>
+            <p>You haven't added any properties yet. Click the "Add New Property" button to get started!</p>
         </div>
     }
     else
     {
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            @foreach (var item in Model)
+            @foreach (var property in Model)
             {
                 <div class="col">
                     <div class="card h-100 shadow-sm">
-                        <div class="position-relative">
-                            @{
-                                var primaryImage = item.Images?.FirstOrDefault(i => i.IsPrimary);
-                                var firstImage = item.Images?.FirstOrDefault();
-                                var imagePath = (primaryImage ?? firstImage)?.ImagePath ?? "/images/placeholder-property.jpg";
-                            }
-                            <img src="@imagePath"
-                                 class="card-img-top"
-                                 style="height: 200px; object-fit: cover;"
-                                 alt="@item.Title"
-                                 onerror="this.onerror=null; this.src='/images/placeholder-property.jpg';" />
+                        @{
+                            var primaryImage = property.Images?.FirstOrDefault(img => img.IsPrimary) ?? property.Images?.FirstOrDefault();
+                        }
 
-                            <div class="position-absolute top-0 end-0 p-2">
-                                <span class="badge @(item.IsAvailable ? "bg-success" : "bg-danger")">
-                                    @(item.IsAvailable ? "Available" : "Not Available")
-                                </span>
+                        @if (primaryImage != null)
+                        {
+                            <img src="@Url.Content(primaryImage.ImagePath)"
+                                 class="card-img-top"
+                                 alt="@property.Title"
+                                 style="height: 200px; object-fit: cover;"
+                                 onerror="this.onerror=null; this.src='/images/no-image-placeholder.jpg'; this.parentElement.querySelector('.img-error').style.display='block';">
+                            <div class="img-error" style="display:none; position:absolute; top:10px; right:10px;">
+                                <span class="badge bg-warning text-dark">Image not found</span>
                             </div>
-                            
-                            @if (item.Images != null && item.Images.Any())
-                            {
-                                <div class="position-absolute bottom-0 start-0 p-2">
-                                    <span class="badge bg-dark bg-opacity-75">
-                                        <i class="bi bi-images"></i> @item.Images.Count
-                                    </span>
-                                </div>
-                            }
-                        </div>
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-house-door text-white" style="font-size: 4rem;"></i>
+                            </div>
+                        }
 
                         <div class="card-body">
-                            <h5 class="card-title">@item.Title</h5>
-
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-primary fw-bold fs-5">$@item.Price.ToString("N0")</span>
-                                <small class="text-muted">@item.PropertyType</small>
-                            </div>
-
-                            <p class="card-text small mb-2">
-                                <i class="bi bi-geo-alt text-muted me-1"></i>
-                                @item.Address, @item.City, @item.State @item.ZipCode
+                            <h5 class="card-title">@property.Title</h5>
+                            <p class="card-text text-muted small">
+                                <i class="bi bi-geo-alt"></i>
+                                @if (!string.IsNullOrEmpty(property.Address))
+                                {
+                                    @property.Address
+                                    @if (!string.IsNullOrEmpty(property.City))
+                                    {
+                                        <text>, @property.City</text>
+                                    }
+                                    @if (!string.IsNullOrEmpty(property.State))
+                                    {
+                                        <text>, @property.State</text>
+                                    }
+                                    @if (!string.IsNullOrEmpty(property.ZipCode))
+                                    {
+                                        <text> @property.ZipCode</text>
+                                    }
+                                }
+                                else
+                                {
+                                    <text>No address provided</text>
+                                }
                             </p>
+                            <h4 class="text-primary mb-3">$@property.Price.ToString("N2")</h4>
 
                             <div class="d-flex justify-content-between mb-3">
-                                <span class="small">
-                                    <i class="bi bi-door-closed text-muted me-1"></i>
-                                    @item.Bedrooms BD
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-door-closed"></i> @property.Bedrooms BR
                                 </span>
-                                <span class="small">
-                                    <i class="bi bi-water text-muted me-1"></i>
-                                    @item.Bathrooms BA
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-droplet"></i> @property.Bathrooms BA
                                 </span>
-                                <span class="small">
-                                    <i class="bi bi-arrows-angle-expand text-muted me-1"></i>
-                                    @item.SquareFootage.ToString("N0") SF
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-rulers"></i> @property.SquareFootage.ToString("N0") sq ft
                                 </span>
                             </div>
 
-                            @if (!string.IsNullOrEmpty(item.Description))
-                            {
-                                <p class="card-text small text-muted">
-                                    @(item.Description.Length > 100 ? item.Description[..100] + "..." : item.Description)
-                                </p>
-                            }
+                            <div class="mb-3">
+                                @if (property.IsAvailable)
+                                {
+                                    <span class="badge bg-success">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Not Available</span>
+                                }
+                                @if (!string.IsNullOrEmpty(property.PropertyType))
+                                {
+                                    <span class="badge bg-info text-dark">@property.PropertyType</span>
+                                }
+                                @if (property.Images != null && property.Images.Any())
+                                {
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-image"></i> @property.Images.Count
+                                    </span>
+                                }
+                            </div>
+
+                            <p class="card-text small text-muted">
+                                @if (!string.IsNullOrEmpty(property.Description))
+                                {
+                                    if (property.Description.Length > 100)
+                                    {
+                                        @property.Description.Substring(0, 100)
+
+                                        <text>...</text>
+                                    }
+                                    else
+                                    {
+                                        @property.Description
+                                    }
+                                }
+                                else
+                                {
+                                    <text>No description provided</text>
+                                }
+                            </p>
                         </div>
 
-                        <div class="card-footer bg-transparent border-top-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>
-                                    Updated @(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? item.CreatedAt.ToString("MMM dd, yyyy"))
-                                </small>
-                                <div class="btn-group">
-                                    <a asp-action="Edit"
-                                       asp-route-id="@item.Id"
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil me-1"></i>Edit
-                                    </a>
-                                    <a asp-action="Details"
-                                       asp-route-id="@item.Id"
-                                       class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-info-circle me-1"></i>Details
-                                    </a>
-                                </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <div class="btn-group d-flex" role="group">
+                                <a asp-action="Details" asp-route-id="@property.Id" class="btn btn-sm btn-outline-primary w-100">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a asp-action="Edit" asp-route-id="@property.Id" class="btn btn-sm btn-outline-secondary w-100">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal-@property.Id">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation Modal -->
+                <div class="modal fade" id="deleteModal-@property.Id" tabindex="-1" aria-labelledby="deleteModalLabel-@property.Id" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteModalLabel-@property.Id">Confirm Delete</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to delete the property "<strong>@property.Title</strong>"?</p>
+                                <p class="text-danger">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    This action cannot be undone. All property images will also be deleted.
+                                </p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form asp-action="Delete" asp-route-id="@property.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-trash"></i> Delete Property
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -139,52 +193,31 @@
             }
         </div>
 
-        <div class="mt-4 text-center">
-            <p class="text-muted mb-0">
-                Showing @Model.Count() @(Model.Count() == 1 ? "property" : "properties")
-            </p>
+        <div class="mt-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <p class="text-muted mb-0">
+                    <strong>Total Properties:</strong> @Model.Count()
+                </p>
+                <p class="text-muted mb-0">
+                    <strong>Available:</strong> @Model.Count(p => p.IsAvailable) |
+                    <strong>Not Available:</strong> @Model.Count(p => !p.IsAvailable)
+                </p>
+            </div>
         </div>
     }
 </div>
 
-@section Styles {
-    <style>
-        .card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-        }
-
-        .btn-group .btn {
-            transition: all 0.2s ease-in-out;
-        }
-
-        .badge {
-            font-size: 0.8rem;
-        }
-
-        .card-img-top {
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .card:hover .card-img-top {
-            transform: scale(1.05);
-        }
-
-        .card-img-top {
-            overflow: hidden;
-        }
-    </style>
-}
-
 @section Scripts {
     <script>
-        // Auto-hide alerts after 5 seconds
+        // Auto-dismiss alerts after 5 seconds
         setTimeout(function () {
-            $('.alert').alert('close');
+            $('.alert').fadeOut('slow');
         }, 5000);
+
+        // Debug: Log image paths
+        console.log('Dashboard loaded');
+        document.querySelectorAll('.card-img-top').forEach(img => {
+            console.log('Image src:', img.src);
+        });
     </script>
 }

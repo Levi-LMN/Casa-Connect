@@ -44,6 +44,7 @@ namespace CasaConnect.Models
         [ForeignKey("OwnerId")]
         public virtual User? Owner { get; set; }  // Nullable to prevent errors if owner is not assigned
 
-        public virtual List<PropertyImage>? Images { get; set; }  // Nullable list of property images
+        // ✅ FIXED: This must match the configuration in ApplicationDbContext
+        public virtual ICollection<PropertyImage>? Images { get; set; }  // Changed from List to ICollection
     }
 }

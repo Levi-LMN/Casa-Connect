@@ -16,16 +16,17 @@
 
                     @if (Model.Images != null && Model.Images.Any())
                     {
+                        var imagesList = Model.Images.ToList();
                         <div id="propertyCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
                             <div class="carousel-inner">
-                                @for (int i = 0; i < Model.Images.Count; i++)
+                                @for (int i = 0; i < imagesList.Count; i++)
                                 {
                                     <div class="carousel-item @(i == 0 ? "active" : "")">
-                                        <img src="@Model.Images[i].ImagePath" class="d-block w-100" alt="Property image">
+                                        <img src="@imagesList[i].ImagePath" class="d-block w-100" alt="Property image" style="max-height: 500px; object-fit: cover;">
                                     </div>
                                 }
                             </div>
-                            @if (Model.Images.Count > 1)
+                            @if (imagesList.Count > 1)
                             {
                                 <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
                                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>

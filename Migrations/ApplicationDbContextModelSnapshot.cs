@@ -226,17 +226,12 @@ namespace CasaConnect.Migrations
                     b.Property<int>("PropertyId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("PropertyId1")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("UploadedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PropertyId");
-
-                    b.HasIndex("PropertyId1");
 
                     b.ToTable("PropertyImages");
                 });
@@ -530,14 +525,10 @@ namespace CasaConnect.Migrations
             modelBuilder.Entity("CasaConnect.Models.PropertyImage", b =>
                 {
                     b.HasOne("CasaConnect.Models.Property", "Property")
-                        .WithMany()
+                        .WithMany("Images")
                         .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("CasaConnect.Models.Property", null)
-                        .WithMany("Images")
-                        .HasForeignKey("PropertyId1");
 
                     b.Navigation("Property");
                 });
