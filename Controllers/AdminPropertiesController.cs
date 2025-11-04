@@ -1,5 +1,5 @@
 ﻿// ========================================
-// AdminPropertiesController.cs - FIXED
+// AdminPropertiesController.cs
 // ========================================
 using CasaConnect.Data;
 using CasaConnect.Models;
