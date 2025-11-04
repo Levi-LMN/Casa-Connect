@@ -3,7 +3,7 @@ using CasaConnect.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+using System.Security.Claims;
 
 namespace CasaConnect.Controllers
 {
@@ -18,15 +18,34 @@ namespace CasaConnect.Controllers
             _context = context;
         }
 
+        // Home page - displays available properties
         public async Task<IActionResult> Index()
         {
-            var properties = await _context.Properties
-                .Include(p => p.Images)
-                .Where(p => p.IsAvailable)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+            try
+            {
+                var properties = await _context.Properties
+                    .Include(p => p.Images)
+                    .Include(p => p.Owner)
+                    .Where(p => p.IsAvailable)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(12) // Show latest 12 properties
+                    .ToListAsync();
 
-            return View(properties);
+                return View(properties);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading home page");
+                return View(new List<Property>());
+            }
+        }
+
+        // Example: safely get user id
+        private int? GetCurrentUserId()
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(claim, out var id)) return id;
+            return null;
         }
 
         public async Task<IActionResult> PropertyDetails(int? id)
@@ -46,42 +65,38 @@ namespace CasaConnect.Controllers
                 return NotFound();
             }
 
-            // Check if property is favorited by current user
+            // Check if property is favorited by current user - safe parsing
             if (User.Identity.IsAuthenticated)
             {
-                var userId = int.Parse(User.FindFirst("UserId").Value);
-                ViewBag.IsFavorited = await _context.Favorites
-                    .AnyAsync(f => f.UserId == userId && f.PropertyId == property.Id);
+                var userId = GetCurrentUserId();
+                if (userId.HasValue)
+                {
+                    ViewBag.IsFavorited = await _context.Favorites
+                        .AnyAsync(f => f.UserId == userId.Value && f.PropertyId == property.Id);
+                }
             }
 
             return View(property);
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> ToggleFavorite(int propertyId)
         {
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+            {
+                return Unauthorized();
+            }
+
             var favorite = await _context.Favorites
-                .FirstOrDefaultAsync(f => f.UserId == userId && f.PropertyId == propertyId);
+                .FirstOrDefaultAsync(f => f.UserId == userId.Value && f.PropertyId == propertyId);
 
             if (favorite == null)
             {
-                // Add to favorites
                 favorite = new Favorite
                 {
-                    UserId = userId,
+                    UserId = userId.Value,
                     PropertyId = propertyId,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -91,7 +106,6 @@ namespace CasaConnect.Controllers
             }
             else
             {
-                // Remove from favorites
                 _context.Favorites.Remove(favorite);
                 await _context.SaveChangesAsync();
                 return Json(new { isFavorited = false });
@@ -101,16 +115,35 @@ namespace CasaConnect.Controllers
         [Authorize]
         public async Task<IActionResult> MyFavorites()
         {
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+            {
+                return Unauthorized();
+            }
+
             var favorites = await _context.Favorites
                 .Include(f => f.Property)
-                    .ThenInclude(p => p.Images)
-                .Where(f => f.UserId == userId)
+                .ThenInclude(p => p.Images)
+                .Where(f => f.UserId == userId.Value)
                 .OrderByDescending(f => f.CreatedAt)
                 .Select(f => f.Property)
                 .ToListAsync();
 
             return View(favorites);
         }
+
+        // Error page
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+    }
+
+    // ErrorViewModel
+    public class ErrorViewModel
+    {
+        public string RequestId { get; set; }
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
 }

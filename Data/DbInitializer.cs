@@ -1,39 +1,57 @@
-﻿using CasaConnect.Data;
-using CasaConnect.Models;
+﻿using CasaConnect.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
-public static class DbInitializer
+namespace CasaConnect.Data
 {
-    public static void Initialize(ApplicationDbContext context, IPasswordHasher<User> passwordHasher)
+    public static class DbInitializer
     {
-        context.Database.EnsureCreated();
-
-        // Check if we already have any users
-        if (context.Users.Any())
+        public static async Task Initialize(
+            ApplicationDbContext context,
+            UserManager<User> userManager,
+            RoleManager<ApplicationRole> roleManager)
         {
-            return;   // DB has been seeded
+            // Ensure database is created
+            await context.Database.MigrateAsync();
+
+            // Create roles if they don't exist
+            string[] roles = { "Admin", "Owner", "Seeker" };
+
+            foreach (var roleName in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(roleName))
+                {
+                    await roleManager.CreateAsync(new ApplicationRole(roleName));
+                }
+            }
+
+            // Create default admin user if not exists
+            string adminEmail = "admin@casaconnect.com";
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+            if (adminUser == null)
+            {
+                adminUser = new User
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    FirstName = "Admin",
+                    LastName = "User",
+                    PhoneNumber = "1234567890",
+                    Address = "System Address",
+                    Role = "Admin",
+                    IsActive = true,
+                    EmailConfirmed = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var result = await userManager.CreateAsync(adminUser, "Admin@123");
+
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
+            }
         }
-
-        var adminUser = new User
-        {
-            FirstName = "Admin",
-            LastName = "User",
-            Email = "admin@casaconnect.com",
-            Password = HashPassword(passwordHasher, "Admin@123"),
-            Role = "Admin",
-            PhoneNo = "1234567890",
-            Address = "Admin Address",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        context.Users.Add(adminUser);
-        context.SaveChanges();
-    }
-
-    private static string HashPassword(IPasswordHasher<User> passwordHasher, string password)
-    {
-        var user = new User(); // Dummy user object for hashing
-        return passwordHasher.HashPassword(user, password);
     }
 }

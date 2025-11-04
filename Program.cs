@@ -1,73 +1,105 @@
-using CasaConnect.Data;
+﻿using CasaConnect.Data;
 using CasaConnect.Models;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace CasaConnect
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Configure logging (Serilog)
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Configuration)
+                .Enrich.FromLogContext()
+                .CreateLogger();
+
+            builder.Host.UseSerilog();
+
+            // Add services
             builder.Services.AddControllersWithViews();
 
             // Configure database context to use SQLite
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Add Identity services and PasswordHasher
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    options.LoginPath = "/Account/Login";
-                    options.LogoutPath = "/Account/Logout";
-                    options.AccessDeniedPath = "/Account/AccessDenied";
-                });
+            // Configure HTTPS redirection
+            builder.Services.AddHttpsRedirection(options =>
+            {
+                // Automatically redirect HTTP -> HTTPS
+                options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
+                // Use the standard HTTPS port for dev (5001) or production (443)
+                options.HttpsPort = 5001;
+            });
 
-            builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>(); // Add PasswordHasher service
+            // Identity configuration
+            builder.Services.AddIdentity<User, ApplicationRole>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequiredLength = 8;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
 
-            // Add SignalR Service
+            // Authorization policies
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+            });
+
+            // IHttpClientFactory
+            builder.Services.AddHttpClient();
+
+            // Data protection
+            builder.Services.AddDataProtection();
+
+            // Add SignalR
             builder.Services.AddSignalR();
 
             var app = builder.Build();
 
-            // Initialize the database (seeds the admin user)
+            // Initialize the database (seed roles and admin)
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
                 var context = services.GetRequiredService<ApplicationDbContext>();
-                var passwordHasher = services.GetRequiredService<IPasswordHasher<User>>(); // Get the password hasher
-                DbInitializer.Initialize(context, passwordHasher); // Initialize the database with the password hasher
+                var userManager = services.GetRequiredService<UserManager<User>>();
+                var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+                await DbInitializer.Initialize(context, userManager, roleManager);
             }
 
-            // Configure the HTTP request pipeline.
+            // Configure middleware pipeline
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
+                app.UseHsts(); // Enable HSTS only in production
             }
 
+            // Always redirect HTTP -> HTTPS
             app.UseHttpsRedirection();
+
             app.UseStaticFiles();
-
             app.UseRouting();
-
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Map controllers
+            // Map controllers and hubs
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
-            // Map SignalR Hub
             app.MapHub<MessageHub>("/messageHub");
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }

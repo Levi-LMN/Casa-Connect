@@ -1,28 +1,23 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// Models/User.cs (updated to use ASP.NET Core Identity)
+using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 
 namespace CasaConnect.Models
 {
-    public class User
+    public class User : IdentityUser<int>
     {
-        [Key]
-        public int Id { get; set; }
-
         [Required]
         [StringLength(100)]
+        [PersonalData] // Mark for GDPR/data protection
         public string FirstName { get; set; }
 
         [Required]
         [StringLength(100)]
+        [PersonalData]
         public string LastName { get; set; }
 
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
-
-        [Required]
-        public string Password { get; set; } // Ideally, store hashed passwords
-
         [StringLength(255)]
+        [PersonalData]
         public string Address { get; set; }
 
         [Required]
@@ -30,9 +25,15 @@ namespace CasaConnect.Models
 
         public bool IsActive { get; set; } = true;
 
-        [Required]
-        public string PhoneNo { get; set; }
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        // Navigation properties
+        public virtual ICollection<Property> Properties { get; set; }
+        public virtual ICollection<Favorite> Favorites { get; set; }
+
+        // Password is now handled by IdentityUser - never stored in plaintext
+        // Email and PhoneNumber are inherited from IdentityUser
     }
 }

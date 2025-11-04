@@ -1,89 +1,88 @@
-﻿using CasaConnect.Models;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿// AccountController.cs (updated areas: authentication, MFA placeholder, secure sign-in)
+using CasaConnect.Data;
+using CasaConnect.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
-public class AccountController : Controller
+namespace CasaConnect.Controllers
 {
-    private readonly CasaConnect.Data.ApplicationDbContext _context;
-    private readonly IPasswordHasher<User> _passwordHasher;
-
-    public AccountController(CasaConnect.Data.ApplicationDbContext context, IPasswordHasher<User> passwordHasher)
+    public class AccountController : Controller
     {
-        _context = context;
-        _passwordHasher = passwordHasher;
-    }
+        private readonly ApplicationDbContext _context;
+        private readonly SignInManager<User> _signInManager;
+        private readonly UserManager<User> _userManager;
+        private readonly ILogger<AccountController> _logger;
 
-    public IActionResult Login()
-    {
-        return View();
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model)
-    {
-        if (ModelState.IsValid)
+        public AccountController(ApplicationDbContext context, SignInManager<User> signInManager,
+            UserManager<User> userManager, ILogger<AccountController> logger)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+            _context = context;
+            _signInManager = signInManager;
+            _userManager = userManager;
+            _logger = logger;
+        }
 
+        [HttpGet]
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                ModelState.AddModelError("", "Invalid login attempt.");
+                // Avoid user enumeration
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return View(model);
             }
 
-            var result = _passwordHasher.VerifyHashedPassword(user, user.Password, model.Password);
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password,
+                model.RememberMe, lockoutOnFailure: true);
 
-            if (result == PasswordVerificationResult.Success)
+            if (result.Succeeded)
             {
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role),
-                    new Claim("UserId", user.Id.ToString())
-                };
-
-                var claimsIdentity = new ClaimsIdentity(
-                    claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = model.RememberMe
-                };
-
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties);
-
+                _logger.LogInformation("User {UserId} logged in", user.Id);
                 return RedirectToAction("Index", "Home");
             }
-            else
+            if (result.RequiresTwoFactor)
             {
-                ModelState.AddModelError("", "Invalid login attempt.");
+                return RedirectToAction(nameof(VerifyTwoFactor)); // MFA flow (implement per app)
             }
+            if (result.IsLockedOut)
+            {
+                _logger.LogWarning("User {Email} account locked out", model.Email);
+                ModelState.AddModelError(string.Empty, "Account locked due to multiple failed login attempts.");
+                return View(model);
+            }
+
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return View(model);
         }
 
-        return View(model);
-    }
-
-    public IActionResult Register()
-    {
-        return View();
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model)
-    {
-        if (ModelState.IsValid)
+        [HttpGet]
+        public IActionResult Register()
         {
-            if (_context.Users.Any(u => u.Email == model.Email))
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
             {
                 ModelState.AddModelError("Email", "Email already exists");
                 return View(model);
@@ -91,125 +90,118 @@ public class AccountController : Controller
 
             var user = new User
             {
+                UserName = model.Email,
+                Email = model.Email,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                Email = model.Email,
-                Password = _passwordHasher.HashPassword(new User(), model.Password),
-                PhoneNo = model.PhoneNo,
+                PhoneNumber = model.PhoneNo,
                 Address = model.Address,
-                Role = model.Role, // Admin, Seeker, or Owner
+                Role = model.Role,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, model.Role);
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                return RedirectToAction("Index", "Home");
+            }
 
-            await LoginUserAfterRegistration(user);
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
 
-            return RedirectToAction("Index", "Home");
-        }
-
-        return View(model);
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> Logout()
-    {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return RedirectToAction("Login");
-    }
-
-    private async Task LoginUserAfterRegistration(User user)
-    {
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.Email),
-            new Claim(ClaimTypes.Role, user.Role),
-            new Claim("UserId", user.Id.ToString())
-        };
-
-        var claimsIdentity = new ClaimsIdentity(
-            claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(claimsIdentity));
-    }
-
-    [Authorize]
-    public async Task<IActionResult> Profile()
-    {
-        var userEmail = User.Identity?.Name;
-
-        if (string.IsNullOrEmpty(userEmail))
-        {
-            return Unauthorized();
-        }
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
-
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        var viewModel = new ProfileViewModel
-        {
-            Id = user.Id,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Email = user.Email,
-            PhoneNo = user.PhoneNo,
-            Address = user.Address,
-            Role = user.Role
-        };
-
-        return View(viewModel);
-    }
-
-    [Authorize]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Profile(ProfileViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
             return View(model);
         }
 
-        var user = await _context.Users.FindAsync(model.Id);
-
-        if (user == null)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
         {
-            return NotFound();
+            await _signInManager.SignOutAsync();
+            return RedirectToAction("Login");
         }
 
-        if (user.Email != User.Identity?.Name)
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Profile()
         {
-            return Forbid();
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var viewModel = new ProfileViewModel
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                PhoneNo = user.PhoneNumber,
+                Address = user.Address,
+                Role = user.Role
+            };
+
+            return View(viewModel);
         }
 
-        user.FirstName = model.FirstName;
-        user.LastName = model.LastName;
-        user.PhoneNo = model.PhoneNo;
-        user.Address = model.Address;
-
-        if (!string.IsNullOrEmpty(model.NewPassword))
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(ProfileViewModel model)
         {
-            user.Password = _passwordHasher.HashPassword(user, model.NewPassword);
-        }
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
 
-        try
-        {
-            await _context.SaveChangesAsync();
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.PhoneNumber = model.PhoneNo;
+            user.Address = model.Address;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+
+            if (!string.IsNullOrEmpty(model.NewPassword))
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var passwordResult = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+
+                if (!passwordResult.Succeeded)
+                {
+                    foreach (var error in passwordResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    return View(model);
+                }
+            }
+
             TempData["SuccessMessage"] = "Profile updated successfully!";
             return RedirectToAction(nameof(Profile));
         }
-        catch (Exception)
-        {
-            ModelState.AddModelError("", "An error occurred while saving changes.");
-            return View(model);
-        }
+
+        // MFA verification stub (implement with authenticator or SMS provider)
+        [HttpGet]
+        public IActionResult VerifyTwoFactor() => View();
     }
 }
