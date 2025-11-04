@@ -1962,11 +1962,11 @@ Logging sanitized and restricted
 
 ```bash
 # Store sensitive values in environment variables
-export ConnectionStrings__DefaultConnection="Server=prod-server;Database=CasaConnect;..."
-export ASPNETCORE_ENVIRONMENT="Production"
-export CertificatePassword="<secure-password>"
-export DataProtection__KeyPath="/var/keys"
+ConnectionStrings__DefaultConnection=Data Source=CasaConnect.db
+ADMIN_PASSWORD=Admin@123
 ```
+
+
 
 ### Change Summary
 
