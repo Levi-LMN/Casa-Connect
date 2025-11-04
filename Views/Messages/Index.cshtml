@@ -2,7 +2,7 @@
 @model List<CasaConnect.Models.Conversation>
 @{
     ViewData["Title"] = "My Messages";
-    var currentUserId = int.Parse(User.FindFirst("UserId").Value);
+    var currentUserId = (int)ViewBag.CurrentUserId;
 }
 
 <div class="container mt-4">

@@ -1,7 +1,7 @@
 ﻿@model CasaConnect.Models.Conversation
 @{
     ViewData["Title"] = "Conversation - " + Model.Property.Title;
-    var currentUserId = int.Parse(User.FindFirst("UserId").Value);
+    var currentUserId = (int)ViewBag.CurrentUserId;
     var otherUser = currentUserId == Model.SeekerId ? Model.Owner : Model.Seeker;
 }
 

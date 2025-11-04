@@ -59,13 +59,23 @@
                             <img src="@imagePath"
                                  class="card-img-top"
                                  style="height: 200px; object-fit: cover;"
-                                 alt="@item.Title" />
+                                 alt="@item.Title"
+                                 onerror="this.onerror=null; this.src='/images/placeholder-property.jpg';" />
 
                             <div class="position-absolute top-0 end-0 p-2">
                                 <span class="badge @(item.IsAvailable ? "bg-success" : "bg-danger")">
                                     @(item.IsAvailable ? "Available" : "Not Available")
                                 </span>
                             </div>
+                            
+                            @if (item.Images != null && item.Images.Any())
+                            {
+                                <div class="position-absolute bottom-0 start-0 p-2">
+                                    <span class="badge bg-dark bg-opacity-75">
+                                        <i class="bi bi-images"></i> @item.Images.Count
+                                    </span>
+                                </div>
+                            }
                         </div>
 
                         <div class="card-body">
@@ -140,12 +150,13 @@
 @section Styles {
     <style>
         .card {
-            transition: transform 0.2s ease-in-out;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
 
-            .card:hover {
-                transform: translateY(-5px);
-            }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        }
 
         .btn-group .btn {
             transition: all 0.2s ease-in-out;
@@ -153,6 +164,18 @@
 
         .badge {
             font-size: 0.8rem;
+        }
+
+        .card-img-top {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+
+        .card-img-top {
+            overflow: hidden;
         }
     </style>
 }

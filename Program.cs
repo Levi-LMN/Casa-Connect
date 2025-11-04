@@ -1,5 +1,6 @@
 ﻿using CasaConnect.Data;
 using CasaConnect.Models;
+using DotNetEnv; // ✅ For loading .env file
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -10,9 +11,12 @@ namespace CasaConnect
     {
         public static async Task Main(string[] args)
         {
+            // ✅ Load .env file (only in local dev)
+            Env.Load();
+
             var builder = WebApplication.CreateBuilder(args);
 
-            // Configure logging (Serilog)
+            // ✅ Configure logging (Serilog)
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(builder.Configuration)
                 .Enrich.FromLogContext()
@@ -20,23 +24,21 @@ namespace CasaConnect
 
             builder.Host.UseSerilog();
 
-            // Add services
+            // ✅ Add services
             builder.Services.AddControllersWithViews();
 
-            // Configure database context to use SQLite
+            // ✅ Configure database context to use SQLite (connection from .env)
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Configure HTTPS redirection
+            // ✅ Configure HTTPS redirection
             builder.Services.AddHttpsRedirection(options =>
             {
-                // Automatically redirect HTTP -> HTTPS
                 options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
-                // Use the standard HTTPS port for dev (5001) or production (443)
-                options.HttpsPort = 5001;
+                options.HttpsPort = 5001; // Use dev HTTPS port
             });
 
-            // Identity configuration
+            // ✅ Identity configuration
             builder.Services.AddIdentity<User, ApplicationRole>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -50,24 +52,24 @@ namespace CasaConnect
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-            // Authorization policies
+            // ✅ Authorization policies
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
             });
 
-            // IHttpClientFactory
+            // ✅ IHttpClientFactory
             builder.Services.AddHttpClient();
 
-            // Data protection
+            // ✅ Data protection
             builder.Services.AddDataProtection();
 
-            // Add SignalR
+            // ✅ SignalR
             builder.Services.AddSignalR();
 
             var app = builder.Build();
 
-            // Initialize the database (seed roles and admin)
+            // ✅ Initialize the database (seed roles and admin)
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -77,14 +79,14 @@ namespace CasaConnect
                 await DbInitializer.Initialize(context, userManager, roleManager);
             }
 
-            // Configure middleware pipeline
+            // ✅ Configure middleware pipeline
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts(); // Enable HSTS only in production
             }
 
-            // Always redirect HTTP -> HTTPS
+            // ✅ Always redirect HTTP -> HTTPS
             app.UseHttpsRedirection();
 
             app.UseStaticFiles();
@@ -92,7 +94,7 @@ namespace CasaConnect
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Map controllers and hubs
+            // ✅ Map controllers and hubs
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");

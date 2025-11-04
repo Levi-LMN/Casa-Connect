@@ -1,13 +1,15 @@
+// ========================================
+// HomeController.cs - UPDATED
+// ========================================
 using CasaConnect.Data;
 using CasaConnect.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace CasaConnect.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
@@ -40,14 +42,6 @@ namespace CasaConnect.Controllers
             }
         }
 
-        // Example: safely get user id
-        private int? GetCurrentUserId()
-        {
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(claim, out var id)) return id;
-            return null;
-        }
-
         public async Task<IActionResult> PropertyDetails(int? id)
         {
             if (id == null)
@@ -65,10 +59,10 @@ namespace CasaConnect.Controllers
                 return NotFound();
             }
 
-            // Check if property is favorited by current user - safe parsing
+            // Check if property is favorited by current user
             if (User.Identity.IsAuthenticated)
             {
-                var userId = GetCurrentUserId();
+                var userId = GetCurrentUserIdOrNull();
                 if (userId.HasValue)
                 {
                     ViewBag.IsFavorited = await _context.Favorites
@@ -84,19 +78,15 @@ namespace CasaConnect.Controllers
         public async Task<IActionResult> ToggleFavorite(int propertyId)
         {
             var userId = GetCurrentUserId();
-            if (!userId.HasValue)
-            {
-                return Unauthorized();
-            }
 
             var favorite = await _context.Favorites
-                .FirstOrDefaultAsync(f => f.UserId == userId.Value && f.PropertyId == propertyId);
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.PropertyId == propertyId);
 
             if (favorite == null)
             {
                 favorite = new Favorite
                 {
-                    UserId = userId.Value,
+                    UserId = userId,
                     PropertyId = propertyId,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -116,15 +106,11 @@ namespace CasaConnect.Controllers
         public async Task<IActionResult> MyFavorites()
         {
             var userId = GetCurrentUserId();
-            if (!userId.HasValue)
-            {
-                return Unauthorized();
-            }
 
             var favorites = await _context.Favorites
                 .Include(f => f.Property)
                 .ThenInclude(p => p.Images)
-                .Where(f => f.UserId == userId.Value)
+                .Where(f => f.UserId == userId)
                 .OrderByDescending(f => f.CreatedAt)
                 .Select(f => f.Property)
                 .ToListAsync();

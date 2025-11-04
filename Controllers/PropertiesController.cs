@@ -1,4 +1,7 @@
-﻿using CasaConnect.Data;
+﻿// ========================================
+// PropertiesController.cs - UPDATED
+// ========================================
+using CasaConnect.Data;
 using CasaConnect.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CasaConnect.Controllers
 {
     [Authorize(Roles = "Owner")]
-    public class PropertiesController : Controller
+    public class PropertiesController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
@@ -21,7 +24,7 @@ namespace CasaConnect.Controllers
         // GET: Properties/Dashboard
         public async Task<IActionResult> Dashboard()
         {
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
             var properties = await _context.Properties
                 .Include(p => p.Images)
                 .Where(p => p.OwnerId == userId)
@@ -48,7 +51,7 @@ namespace CasaConnect.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    property.OwnerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                    property.OwnerId = GetCurrentUserId();
                     property.CreatedAt = DateTime.UtcNow;
                     property.IsAvailable = true;
                     property.Images = new List<PropertyImage>();
@@ -114,7 +117,7 @@ namespace CasaConnect.Controllers
                 return NotFound();
             }
 
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
             var property = await _context.Properties
                 .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id && p.OwnerId == userId);
@@ -142,7 +145,7 @@ namespace CasaConnect.Controllers
                 return NotFound();
             }
 
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
             var existingProperty = await _context.Properties
                 .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id && p.OwnerId == userId);
@@ -247,7 +250,7 @@ namespace CasaConnect.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteImage(int id)
         {
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
             var image = await _context.PropertyImages
                 .Include(pi => pi.Property)
                 .FirstOrDefaultAsync(pi => pi.Id == id && pi.Property.OwnerId == userId);
@@ -290,7 +293,7 @@ namespace CasaConnect.Controllers
                 return NotFound();
             }
 
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
             var property = await _context.Properties
                 .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id && p.OwnerId == userId);

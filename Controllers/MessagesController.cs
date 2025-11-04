@@ -1,4 +1,7 @@
-﻿using CasaConnect.Data;
+﻿// ========================================
+// MessagesController.cs - UPDATED
+// ========================================
+using CasaConnect.Data;
 using CasaConnect.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CasaConnect.Controllers
 {
     [Authorize]
-    public class MessagesController : Controller
+    public class MessagesController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<MessageHub> _hubContext;
@@ -26,7 +29,7 @@ namespace CasaConnect.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
             var conversations = await _context.Conversations
                 .Include(c => c.Property)
                 .Include(c => c.Seeker)
@@ -36,12 +39,13 @@ namespace CasaConnect.Controllers
                 .OrderByDescending(c => c.LastMessageAt)
                 .ToListAsync();
 
+            ViewBag.CurrentUserId = userId;
             return View(conversations);
         }
 
         public async Task<IActionResult> Conversation(int id)
         {
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
             var conversation = await _context.Conversations
                 .Include(c => c.Property)
                 .Include(c => c.Seeker)
@@ -53,6 +57,9 @@ namespace CasaConnect.Controllers
             {
                 return NotFound();
             }
+
+            // ✅ Add this line
+            ViewBag.CurrentUserId = userId;
 
             // Mark unread messages as read
             var unreadMessages = conversation.Messages
@@ -68,10 +75,11 @@ namespace CasaConnect.Controllers
             return View(conversation);
         }
 
+
         [HttpPost]
         public async Task<IActionResult> StartConversation(int propertyId)
         {
-            var userId = int.Parse(User.FindFirst("UserId").Value);
+            var userId = GetCurrentUserId();
             var property = await _context.Properties
                 .FirstOrDefaultAsync(p => p.Id == propertyId);
 
@@ -123,7 +131,7 @@ namespace CasaConnect.Controllers
                     return BadRequest(new { success = false, error = "Message content cannot be empty" });
                 }
 
-                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var userId = GetCurrentUserId();
                 var conversation = await _context.Conversations
                     .FirstOrDefaultAsync(c => c.Id == request.ConversationId &&
                                             (c.SeekerId == userId || c.OwnerId == userId));
@@ -178,7 +186,7 @@ namespace CasaConnect.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var userId = GetCurrentUserId();
                 var message = await _context.Messages
                     .Include(m => m.Conversation)
                     .FirstOrDefaultAsync(m => m.Id == request.MessageId && m.SenderId == userId);
@@ -227,7 +235,7 @@ namespace CasaConnect.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var userId = GetCurrentUserId();
                 var conversation = await _context.Conversations
                     .Include(c => c.Messages)
                     .FirstOrDefaultAsync(c => c.Id == request.ConversationId &&
@@ -262,7 +270,7 @@ namespace CasaConnect.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var userId = GetCurrentUserId();
                 var conversation = await _context.Conversations
                     .Include(c => c.Messages)
                     .FirstOrDefaultAsync(c => c.Id == request.ConversationId &&
@@ -297,7 +305,7 @@ namespace CasaConnect.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var userId = GetCurrentUserId();
                 var conversations = await _context.Conversations
                     .Include(c => c.Messages)
                     .Where(c => c.SeekerId == userId || c.OwnerId == userId)
@@ -346,7 +354,7 @@ namespace CasaConnect.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var userId = GetCurrentUserId();
                 var unreadCount = await _context.Messages
                     .CountAsync(m =>
                         m.ReceiverId == userId &&
@@ -361,13 +369,12 @@ namespace CasaConnect.Controllers
             }
         }
 
-        // In MessagesController.cs
         [HttpPost]
         public async Task<IActionResult> MarkMessageAsRead(int messageId)
         {
             try
             {
-                var userId = int.Parse(User.FindFirst("UserId").Value);
+                var userId = GetCurrentUserId();
                 var message = await _context.Messages
                     .FirstOrDefaultAsync(m => m.Id == messageId && m.ReceiverId == userId);
 
